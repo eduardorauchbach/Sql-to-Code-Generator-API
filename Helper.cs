@@ -14,7 +14,7 @@ namespace WorkUtilities
                 return name;
             }
 
-            return name.Replace("[", "").Replace("]", "");
+            return name.Replace("[", "").Replace("]", "").Replace("(", "").Replace(")", "");
         }
 
         public static string ToCamelCase(this string name)

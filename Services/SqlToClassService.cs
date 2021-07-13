@@ -11,7 +11,7 @@ namespace WorkUtilities.Services
     {
         public string Parse(string script)
         {
-            const string propertieMap = @"(\[[\S_]*\])[ ]*(\[[\S_]*\])[ ]*(\([\d]*\))?[ ]*([\S ]*)?";
+            const string propertieMap = @"(\[[\S_]*\])[ ]*(\[[\S_]*\])[ ]*(\([\d\,]*\))?[ ]*([\S ]*)?";
 
             StringBuilder result = new StringBuilder();
             MatchCollection matches = Regex.Matches(script, propertieMap);
@@ -43,9 +43,22 @@ namespace WorkUtilities.Services
                         }
                         break;
 
+                    case "numeric":
+                        {
+                            outType = "decimal" + outRequired;
+                        }
+                        break;
+
                     case "char":
                         {
-                            outType = "char" + outRequired;
+                            if (paramLength != "1")
+                            {
+                                outType = "char" + outRequired;
+                            }
+                            else
+                            {
+                                outType = "string";
+                            }
                         }
                         break;
 
