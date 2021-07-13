@@ -16,6 +16,8 @@ namespace WorkUtilities.Services
             StringBuilder result = new StringBuilder();
             MatchCollection matches = Regex.Matches(script, propertieMap);
 
+            string lastType = null;
+
             foreach (Match x in matches.ToList())
             {
                 var paramName = x.Groups[1].Value.Clear();
@@ -25,7 +27,7 @@ namespace WorkUtilities.Services
 
                 string outName = paramName.ToCamelCase();
                 string outRequired = paramRequired.ToLower().Contains("not null") ? "" : "?";
-                string outType;
+                string outType = null;
 
                 switch (paramType.ToLower())
                 {
@@ -43,7 +45,7 @@ namespace WorkUtilities.Services
 
                     case "char":
                         {
-                            outType = "string";
+                            outType = "char" + outRequired;
                         }
                         break;
 
@@ -64,10 +66,15 @@ namespace WorkUtilities.Services
                     default:
                         outType = "_?????_";
                         break;
+                }                
+                
+                if (lastType != outType)
+                {
+                    result.AppendLine();
                 }
-
                 result.AppendLine($"public {outType} {outName} {{get;set;}}");
-                result.AppendLine();
+
+                lastType = outType;
             }
 
             return result.ToString();
