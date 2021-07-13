@@ -31,6 +31,7 @@ namespace WorkUtilities.Services
 
                 switch (paramType.ToLower())
                 {
+                    case "smallint":
                     case "int":
                         {
                             outType = "int" + outRequired;

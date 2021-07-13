@@ -19,10 +19,10 @@ namespace WorkUtilities.Controllers
             _sqlToClassService = sqlToClassService;
         }
 
-        [HttpGet]
+        [HttpPost]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public IActionResult Get(string script)
+        public IActionResult Post(string script)
         {
             string result;
             ObjectResult response;
