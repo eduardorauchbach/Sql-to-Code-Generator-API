@@ -11,10 +11,8 @@ namespace WorkUtilities.Services
     {
         public string Parse(string script)
         {
-            const string propertieMap = @"(\[[\S_]*\])[ ]*(\[[\S_]*\])[ ]*(\([\d\,]*\))?[ ]*([\S ]*)?";
-
             StringBuilder result = new StringBuilder();
-            MatchCollection matches = Regex.Matches(script, propertieMap);
+            MatchCollection matches = Regex.Matches(script, Helper.PropertieMap);
 
             string lastType = null;
 
@@ -51,18 +49,6 @@ namespace WorkUtilities.Services
                         break;
 
                     case "char":
-                        {
-                            if (paramLength != "1")
-                            {
-                                outType = "char" + outRequired;
-                            }
-                            else
-                            {
-                                outType = "string";
-                            }
-                        }
-                        break;
-
                     case "varchar":
                     case "nvarchar":
                         {

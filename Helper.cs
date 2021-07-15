@@ -7,6 +7,13 @@ namespace WorkUtilities
 {
     public static class Helper
     {
+        public const string NameMap = @"CREATE TABLE[ ]*(\[[\S]*\]\.)?(\[[\S_]*\])";
+        public const string PropertieMap = @"(\[[\S_]*\])[ ]*(\[[\S_]*\])[ ]*(\([\d\, ]*\))?[ ]*([\S ]*)?";
+        public const string KeyZoneMap = @"CONSTRAINT (\[[\S_]*\]) PRIMARY KEY [CLUSTERED]*[\s]*\([\s]*(\[[^\s_)]*\][ ]*[\S]*[\s]*)*\)";
+        public const string KeyMap = @"(\[[^\s)]*\])[ ]*[\S]*";
+        public const string IndexZoneMap = @"INDEX (\[[\S_]*\]) ON (\[[\S]*\]\.)?(\[[\S_]*\])[\s]*\([\s]*(\[[^\s_)]*\][ ]*[\S]*[\s]*)*\)";
+        public const string IndexMap = @"(\[[^\s)]*\])[ ]*[\S]*";
+
         public static string Clear(this string name)
         {
             if (string.IsNullOrEmpty(name))
