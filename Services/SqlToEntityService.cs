@@ -44,7 +44,6 @@ namespace WorkUtilities.Services
                     result.AppendLine();
                 }
             }
-            //_ = entity.HasIndex(e => new {{ {string.Join(", ", keys)} }}, "IDX_BEM");
 
             #endregion
 
