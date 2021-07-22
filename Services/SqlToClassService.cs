@@ -12,7 +12,7 @@ namespace WorkUtilities.Services
         public string Parse(string script)
         {
             StringBuilder result = new StringBuilder();
-            MatchCollection matches = Regex.Matches(script, Helper.PropertieMap);
+            MatchCollection matches = Regex.Matches(script, Helper.PropertieMap, RegexOptions.IgnoreCase);
 
             string lastType = null;
 

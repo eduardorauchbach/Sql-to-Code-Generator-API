@@ -2,9 +2,9 @@
 using Autofac.Integration.Mef;
 using System;
 
-namespace WorkUtilities.Services.Translation
+namespace WorkUtilities.Services.Entry
 {
-    public class TranslationModule : Module
+    public class EntryModule : Module
     {
         protected override void Load(ContainerBuilder builder)
         {
@@ -17,7 +17,7 @@ namespace WorkUtilities.Services.Translation
             builder.RegisterMetadataRegistrationSources();
 
             _ = builder
-                .RegisterType<TSqlTranslatorService>()
+                .RegisterType<TSqlParserService>()
                 .InstancePerLifetimeScope()
                 .PropertiesAutowired();
         }

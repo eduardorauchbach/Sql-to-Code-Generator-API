@@ -18,7 +18,7 @@ namespace WorkUtilities.Services
 
             #region Name
 
-            matchHeader = Regex.Match(script, Helper.NameMap);
+            matchHeader = Regex.Match(script, Helper.NameMap, RegexOptions.IgnoreCase);
             if (matchHeader?.Groups.Count > 0)
             {
                 var tableName = matchHeader.Groups[2].Value.Clear();
@@ -30,12 +30,12 @@ namespace WorkUtilities.Services
 
             #region Keys
 
-            matchHeader = Regex.Match(script, Helper.KeyZoneMap);
+            matchHeader = Regex.Match(script, Helper.KeyZoneMap, RegexOptions.IgnoreCase);
             if (!string.IsNullOrEmpty(matchHeader.Value))
             {
                 string[] keys;
 
-                matchesItems = Regex.Matches(matchHeader.Value, Helper.KeyMap);
+                matchesItems = Regex.Matches(matchHeader.Value, Helper.KeyMap, RegexOptions.IgnoreCase);
                 if (matchesItems?.Count > 0)
                 {
                     keys = matchesItems.Skip(1).Select(x => "e." + x.Groups[1].Value.Clear().ToCamelCase()).ToArray();
@@ -49,13 +49,13 @@ namespace WorkUtilities.Services
 
             #region Index
 
-            matchesHeaders = Regex.Matches(script, Helper.IndexZoneMap);
+            matchesHeaders = Regex.Matches(script, Helper.IndexZoneMap, RegexOptions.IgnoreCase);
             foreach (Match x in matchesHeaders.ToList())
             {
                 string[] keys;
-                string indexName = x.Groups[1].Value;
+                string indexName = x.Groups[1].Value.Clear();
 
-                matchesItems = Regex.Matches(x.Value, Helper.IndexMap);
+                matchesItems = Regex.Matches(x.Value, Helper.IndexMap, RegexOptions.IgnoreCase);
                 if (matchesItems?.Count > 0)
                 {
                     keys = matchesItems.Skip(2).Select(x => "e." + x.Groups[1].Value.Clear().ToCamelCase()).ToArray();
@@ -69,7 +69,7 @@ namespace WorkUtilities.Services
 
             #region Properties
 
-            matchesItems = Regex.Matches(script, Helper.PropertieMap);
+            matchesItems = Regex.Matches(script, Helper.PropertieMap, RegexOptions.IgnoreCase);
 
             foreach (Match x in matchesItems.ToList())
             {

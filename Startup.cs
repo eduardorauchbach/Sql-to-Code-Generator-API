@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentValidation.AspNetCore;
 
 namespace WorkUtilities
 {
@@ -34,7 +35,7 @@ namespace WorkUtilities
         {
             _ = services.AddControllers();
             _ = services.AddResponseCompression();
-
+            _ = services.AddFluentValidation(fvc => fvc.RegisterValidatorsFromAssemblyContaining<Startup>());
             _ = services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc(SwaggerVersion, new OpenApiInfo

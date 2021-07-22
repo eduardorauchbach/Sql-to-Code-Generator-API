@@ -5,24 +5,27 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using WorkUtilities.Model;
 
-namespace WorkUtilities.Services.Translation
+namespace WorkUtilities.Services.Entry
 {
-    public class TSqlTranslatorService
+    public class TSqlParserService
     {
-        public const string MainZoneMap = @"CREATE TABLE ([^() ]*\.)*([^() ]+)[ ]*\((([\s]*([^() ]*)[\s]*([^() ]*)(\([\d\, ]*\))?[ ]?([\S]{4,})?[ ]?(NULL|NOT NULL)[\,\s]*)*)";
-        public const string PropertieMap = @"([\s]*([^() ]*)[\s]*([^() ]*)(\([\d\, ]*\))?[ ]?([\S]{4,})?[ ]?(NULL|NOT NULL)[\,\s]?)";
+        private const string MainZoneMap = @"CREATE TABLE ([^() ]*\.)*([^() ]+)[ ]*\((([\s]*([^() ]*)[\s]*([^() ]*)(\([\d\, ]*\))?[ ]?([\S]{4,})?[ ]?(NULL|NOT NULL)[\,\s]*)*)";
+        private const string PropertieMap = @"([\s]*([^() ]*)[\s]*([^() ]*)(\([\d\, ]*\))?[ ]?([\S]{4,})?[ ]?(NULL|NOT NULL)[\,\s]?)";
 
-        public const string KeyZoneMap = @"CONSTRAINT ([^()\s]+) PRIMARY KEY ([^()\s]+)*[\s]*\(([\s]*([^()\s]+[\s]*[^()\s]+[\s]*)*)\)";
-        public const string KeyMap = @"([^()\s)]+)[ ]*[^()\s]*[\,]?";
+        private const string KeyZoneMap = @"CONSTRAINT ([^()\s]+) PRIMARY KEY ([^()\s]+)*[\s]*\(([\s]*([^()\s]+[\s]*[^()\s]+[\s]*)*)\)";
+        private const string KeyMap = @"([^()\s)]+)[ ]*[^()\s]*[\,]?";
 
-        public const string IndexZoneMap = @"INDEX ([^()\s]*) ON ([^()\s\.]+\.)?([\[]?####[\]]?)[\s]*\(([\s]*([^()\s]+[\s]*[^()\s]+[\s]*)*)\)";
-        public const string IndexMap = @"([^()\s)]+)[ ]*[^()\s]*[\,]?";
+        private const string IndexZoneMap = @"INDEX ([^()\s]*) ON ([^()\s\.]+\.)?([\[]?####[\]]?)[\s]*\(([\s]*([^()\s]+[\s]*[^()\s]+[\s]*)*)\)";
+        private const string IndexMap = @"([^()\s)]+)[ ]*[^()\s]*[\,]?";
 
+        private const string RelationshipZoneMap = @"ALTER TABLE ([^() ]+\.)?([^() ]*)[^()\.\[\]]*([^() ]*)[\s]?FOREIGN KEY\(([^() ]*)\)[\s]*REFERENCES ([^() ]+\.)?([^() ]*)[\s]?\(([^() ]*)\)";
 
         public List<EntryModel> Translate(string script)
         {
             List<EntryModel> entryModels;
             EntryModel entryModel;
+            EntryModel entryModelParent;
+            EntryRelationship entryRelationship;
 
             MapperProperty entryProperty;
 
@@ -31,13 +34,28 @@ namespace WorkUtilities.Services.Translation
             MatchCollection matchKeyZone;
             MatchCollection matchIndexZone;
             MatchCollection matchIndexers;
+            MatchCollection matchRelationships;
 
             Match matchMain;
             Match matchProperty;
             Match matchKey;
             Match matchIndex;
+            Match matchRelationship;
 
             string keyZone;
+
+            string paramName;
+            string paramType;
+            string paramLength;
+            string paramRequired;
+
+            string originName;
+            string originProperty;
+            string parentName;
+            string parentProperty;
+
+            string keyName;
+            string indexName;
 
             try
             {
@@ -61,16 +79,16 @@ namespace WorkUtilities.Services.Translation
 
                         #region Properties
 
-                        matchProperties = Regex.Matches(m.Groups[3].Value, Helper.PropertieMap);
+                        matchProperties = Regex.Matches(m.Groups[3].Value, PropertieMap, RegexOptions.IgnoreCase);
 
                         foreach (Match p in matchProperties)
                         {
                             matchProperty = p;
 
-                            var paramName = p.Groups[1].Value.Clear();
-                            var paramType = p.Groups[2].Value.Clear().ToLower();
-                            var paramLength = p.Groups[3].Value.Clear();
-                            var paramRequired = p.Groups[4].Value.Clear();
+                            paramName = p.Groups[2].Value.Clear();
+                            paramType = p.Groups[3].Value.Clear().ToLower();
+                            paramLength = p.Groups[4].Value.Clear();
+                            paramRequired = p.Groups[6].Value.Clear();
 
                             entryProperty = new MapperProperty();
                             entryModel.Properties.Add(entryProperty);
@@ -105,12 +123,12 @@ namespace WorkUtilities.Services.Translation
 
                         if (!string.IsNullOrEmpty(keyZone))
                         {
-                            matchKeyZone = Regex.Matches(keyZone, KeyMap);
+                            matchKeyZone = Regex.Matches(keyZone, KeyMap, RegexOptions.IgnoreCase);
                             foreach (Match k in matchKeyZone)
                             {
                                 matchKey = k;
 
-                                var keyName = k.Groups[1].Value.Clear();
+                                keyName = k.Groups[1].Value.Clear();
 
                                 foreach (MapperProperty p in entryModel.Properties.FindAll(p => p.NameDB == keyName))
                                 {
@@ -123,16 +141,16 @@ namespace WorkUtilities.Services.Translation
 
                         #region Indexers
 
-                        matchIndexZone = Regex.Matches(script, IndexZoneMap.Replace("####", entryModel.NameDB));
+                        matchIndexZone = Regex.Matches(script, IndexZoneMap.Replace("####", entryModel.NameDB), RegexOptions.IgnoreCase);
 
                         foreach (Match iz in matchIndexZone)
                         {
-                            matchIndexers = Regex.Matches(iz.Groups[4]?.Value, IndexMap);
+                            matchIndexers = Regex.Matches(iz.Groups[4]?.Value, IndexMap, RegexOptions.IgnoreCase);
                             foreach (Match i in matchIndexers)
                             {
                                 matchIndex = i;
 
-                                var indexName = i.Groups[1].Value.Clear();
+                                indexName = i.Groups[1].Value.Clear();
 
                                 foreach (MapperProperty p in entryModel.Properties.FindAll(p => p.NameDB == indexName))
                                 {
@@ -141,8 +159,50 @@ namespace WorkUtilities.Services.Translation
                             }
                         }
 
-                        #endregion
+                        #endregion                        
                     }
+
+                    #region Relationship
+
+                    matchRelationships = Regex.Matches(script, RelationshipZoneMap, RegexOptions.IgnoreCase);
+
+                    foreach (Match r in matchRelationships)
+                    {
+                        matchRelationship = r;
+
+                        originName = r.Groups[2].Value.Clear();
+                        originProperty = r.Groups[4].Value.Clear();
+                        parentName = r.Groups[6].Value.Clear();
+                        parentProperty = r.Groups[7].Value.Clear();
+
+                        entryModel = entryModels.Find(e => e.NameDB == originName);
+                        entryProperty = entryModel.Properties.Find(p => p.NameDB == originProperty);
+                        if (entryProperty != null)
+                        {
+                            entryProperty.ParentName = parentName.ToCamelCase();
+                            entryProperty.ParentKey = parentProperty.ToCamelCase();
+                        }
+
+                        entryModelParent = entryModels.Find(e => e.NameDB == parentName);
+                        if (entryModelParent != null)
+                        {
+                            entryRelationship = new EntryRelationship();
+                            entryModelParent.Relationships.Add(entryRelationship);
+
+                            entryRelationship.TargetName = originName;
+
+                            if (entryProperty.IsKey)
+                            {
+                                entryRelationship.Type = RelationshipType.IN_1_OUT_1;
+                            }
+                            else
+                            {
+                                entryRelationship.Type = RelationshipType.IN_1_OUT_N;
+                            }
+                        }
+                    }
+
+                    #endregion
                 }
             }
             catch
@@ -186,7 +246,7 @@ namespace WorkUtilities.Services.Translation
                 case "numeric":
                 case "decimal":
                     {
-                        outType = "long";
+                        outType = "decimal";
                     }
                     break;
                 case "float":

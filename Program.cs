@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using WorkUtilities.Services.Translation;
+using WorkUtilities.Services.Entry;
 
 namespace WorkUtilities
 {
@@ -23,7 +23,7 @@ namespace WorkUtilities
             Host.CreateDefaultBuilder(args)
                 .UseServiceProviderFactory(new AutofacServiceProviderFactory(builder =>
                 {
-                    _ = builder.RegisterModule<TranslationModule>();
+                    _ = builder.RegisterModule<EntryModule>();
                 }))
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
