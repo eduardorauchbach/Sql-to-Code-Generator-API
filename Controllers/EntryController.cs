@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using WorkUtilities.Services.Entry;
+using WorkUtilities.Services.Parser;
 using WorkUtilities.Model;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -14,15 +14,13 @@ namespace WorkUtilities.Controllers
 {    
     [Route("api/[controller]")]
     [ApiController]
-    public class SqlParserController : ControllerBase
+    public class EntryController : ControllerBase
     {
-        private readonly TSqlParserService _sqlTranslatorService;
-        private readonly EntryModelValidator _validations;
+        private readonly EntryParserService _entryParserService;
 
-        public SqlParserController(TSqlParserService sqlTranslatorService)
+        public EntryController(EntryParserService entryParserService)
         {
-            _sqlTranslatorService = sqlTranslatorService;
-            _validations = new EntryModelValidator();
+            _entryParserService = entryParserService;
         }
 
         [HttpPost]
@@ -35,7 +33,7 @@ namespace WorkUtilities.Controllers
 
             try
             {
-                result = _sqlTranslatorService.Translate(script);
+                result = _entryParserService.ParseFromSql(script);
 
                 response = Ok(result);
             }
@@ -50,16 +48,16 @@ namespace WorkUtilities.Controllers
         [HttpPut]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public IActionResult Put(EntryModel model)
+        public IActionResult Put(List<EntryModel> model)
         {
-            List<EntryModel> result;
+            string result;
             ObjectResult response;
 
             try
             {
-                //result = _sqlTranslatorService.Translate(script);
+                result = _entryParserService.ParseToSql(model);
 
-                response = Ok(null);
+                response = Ok(result);
             }
             catch (Exception ex)
             {

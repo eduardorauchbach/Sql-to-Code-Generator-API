@@ -2,9 +2,9 @@
 using Autofac.Integration.Mef;
 using System;
 
-namespace WorkUtilities.Services.Entry
+namespace WorkUtilities.Services.Parser
 {
-    public class EntryModule : Module
+    public class ParserModule : Module
     {
         protected override void Load(ContainerBuilder builder)
         {
@@ -17,7 +17,7 @@ namespace WorkUtilities.Services.Entry
             builder.RegisterMetadataRegistrationSources();
 
             _ = builder
-                .RegisterType<TSqlParserService>()
+                .RegisterType<EntryParserService>()
                 .InstancePerLifetimeScope()
                 .PropertiesAutowired();
         }

@@ -35,17 +35,8 @@ namespace WorkUtilities.Model
         public EntryModelValidator()
         {
             RuleFor(x => x.Name).NotEmpty().WithMessage("Please specify a name");
-
-            //RuleFor(x => x.Surname).NotEmpty();
-            //RuleFor(x => x.Forename).NotEmpty().WithMessage("Please specify a first name");
-            //RuleFor(x => x.Discount).NotEqual(0).When(x => x.HasDiscount);
-            //RuleFor(x => x.Address).Length(20, 250);
+            RuleFor(x => x.Properties).Must(x => x.Count > 0).WithMessage("Please fill any Property");
             //RuleFor(x => x.Postcode).Must(BeAValidPostcode).WithMessage("Please specify a valid postcode");
         }
-
-        //private bool BeAValidPostcode(string postcode)
-        //{
-        //    // custom postcode validating logic goes here
-        //}
     }
 }
