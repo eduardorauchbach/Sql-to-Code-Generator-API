@@ -6,65 +6,66 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using WorkUtilities.Services.Parser;
-using WorkUtilities.Model;
+using WorkUtilities.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace WorkUtilities.Controllers
-{    
-    [Route("api/[controller]")]
-    [ApiController]
-    public class EntryController : ControllerBase
-    {
-        private readonly EntryParserService _entryParserService;
+{
+	[Route("api/[controller]")]
+	[ApiController]
+	public class EntryController : ControllerBase
+	{
+		private readonly EntryParserService _entryParserService;
 
-        public EntryController(EntryParserService entryParserService)
-        {
-            _entryParserService = entryParserService;
-        }
+		public EntryController(EntryParserService entryParserService)
+		{
+			_entryParserService = entryParserService;
+		}
 
-        [HttpPost]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public IActionResult Post(string script)
-        {
-            List<EntryModel> result;
-            ObjectResult response;
+		[HttpGet]
+		[ProducesResponseType(StatusCodes.Status404NotFound)]
+		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+		public IActionResult Get(string script)
+		{
+			GeneratorModel result;
+			ObjectResult response;
 
-            try
-            {
-                result = _entryParserService.ParseFromSql(script);
+			try
+			{
+				result = new GeneratorModel();
+				result.EntryModels = _entryParserService.ParseFromSql(script);
 
-                response = Ok(result);
-            }
-            catch (Exception ex)
-            {
-                response = StatusCode(500, ex.Message);
-            }
+				response = Ok(result);
+			}
+			catch (Exception ex)
+			{
+				response = StatusCode(500, ex.Message);
+			}
 
-            return response;
-        }
+			return response;
+		}
 
-        [HttpPut]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public IActionResult Put(List<EntryModel> model)
-        {
-            string result;
-            ObjectResult response;
+		[HttpPost]
+		[ProducesResponseType(StatusCodes.Status404NotFound)]
+		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+		public IActionResult Post(GeneratorModel model)
+		{
+			string result;
+			ObjectResult response;
 
-            try
-            {
-                result = _entryParserService.ParseToSql(model);
+			try
+			{
+				result = _entryParserService.ParseToSql(model.EntryModels);
 
-                response = Ok(result);
-            }
-            catch (Exception ex)
-            {
-                response = StatusCode(500, ex.Message);
-            }
+				response = Ok(result);
+			}
+			catch (Exception ex)
+			{
+				response = StatusCode(500, ex.Message);
+			}
 
-            return response;
-        }
-    }
+			return response;
+		}
+	}
 }

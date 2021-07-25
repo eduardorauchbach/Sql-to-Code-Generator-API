@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using WorkUtilities.Helpers;
 
 namespace WorkUtilities.Services
 {
@@ -12,7 +13,7 @@ namespace WorkUtilities.Services
         public string Parse(string script)
         {
             StringBuilder result = new StringBuilder();
-            MatchCollection matches = Regex.Matches(script, Helper.PropertieMap, RegexOptions.IgnoreCase);
+            MatchCollection matches = Regex.Matches(script, StringHelper.PropertieMap, RegexOptions.IgnoreCase);
 
             string lastType = null;
 

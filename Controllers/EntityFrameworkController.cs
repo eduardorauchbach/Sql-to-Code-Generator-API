@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WorkUtilities.Services.Generator;
+using WorkUtilities.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,26 +14,26 @@ namespace WorkUtilities.Controllers
 {    
     [Route("api/[controller]")]
     [ApiController]
-    public class SqlToEntityController : ControllerBase
+    public class EntityFrameworkController : ControllerBase
     {
-        private readonly SqlToEntityService _sqlToEntityService;
+        private readonly EntityGeneratorService _entityGeneratorService;
 
-        public SqlToEntityController(SqlToEntityService sqlToEntityService)
+        public EntityFrameworkController(EntityGeneratorService entityGeneratorService)
         {
-            _sqlToEntityService = sqlToEntityService;
+            _entityGeneratorService = entityGeneratorService;
         }
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public IActionResult Post(string script)
+        public IActionResult Post(GeneratorModel model)
         {
             string result;
             ObjectResult response;
 
             try
             {
-                result = _sqlToEntityService.Parse(script);
+                result = string.Join("\n\n\n", _entityGeneratorService.ParseFromGenerator(model));
 
                 response = Ok(result);
             }

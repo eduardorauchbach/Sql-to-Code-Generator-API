@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace WorkUtilities.Model
+namespace WorkUtilities.Models
 {
     public class MapperModel
     {

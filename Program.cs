@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WorkUtilities.Services.Generator;
 using WorkUtilities.Services.Parser;
 
 namespace WorkUtilities
@@ -24,6 +25,7 @@ namespace WorkUtilities
                 .UseServiceProviderFactory(new AutofacServiceProviderFactory(builder =>
                 {
                     _ = builder.RegisterModule<ParserModule>();
+                    _ = builder.RegisterModule<GeneratorModule>();
                 }))
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

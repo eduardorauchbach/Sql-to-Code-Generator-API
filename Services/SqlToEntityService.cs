@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using WorkUtilities.Helpers;
 
 namespace WorkUtilities.Services
 {
@@ -18,7 +19,7 @@ namespace WorkUtilities.Services
 
             #region Name
 
-            matchHeader = Regex.Match(script, Helper.NameMap, RegexOptions.IgnoreCase);
+            matchHeader = Regex.Match(script, StringHelper.NameMap, RegexOptions.IgnoreCase);
             if (matchHeader?.Groups.Count > 0)
             {
                 var tableName = matchHeader.Groups[2].Value.Clear();
@@ -30,12 +31,12 @@ namespace WorkUtilities.Services
 
             #region Keys
 
-            matchHeader = Regex.Match(script, Helper.KeyZoneMap, RegexOptions.IgnoreCase);
+            matchHeader = Regex.Match(script, StringHelper.KeyZoneMap, RegexOptions.IgnoreCase);
             if (!string.IsNullOrEmpty(matchHeader.Value))
             {
                 string[] keys;
 
-                matchesItems = Regex.Matches(matchHeader.Value, Helper.KeyMap, RegexOptions.IgnoreCase);
+                matchesItems = Regex.Matches(matchHeader.Value, StringHelper.KeyMap, RegexOptions.IgnoreCase);
                 if (matchesItems?.Count > 0)
                 {
                     keys = matchesItems.Skip(1).Select(x => "e." + x.Groups[1].Value.Clear().ToCamelCase()).ToArray();
@@ -49,13 +50,13 @@ namespace WorkUtilities.Services
 
             #region Index
 
-            matchesHeaders = Regex.Matches(script, Helper.IndexZoneMap, RegexOptions.IgnoreCase);
+            matchesHeaders = Regex.Matches(script, StringHelper.IndexZoneMap, RegexOptions.IgnoreCase);
             foreach (Match x in matchesHeaders.ToList())
             {
                 string[] keys;
                 string indexName = x.Groups[1].Value.Clear();
 
-                matchesItems = Regex.Matches(x.Value, Helper.IndexMap, RegexOptions.IgnoreCase);
+                matchesItems = Regex.Matches(x.Value, StringHelper.IndexMap, RegexOptions.IgnoreCase);
                 if (matchesItems?.Count > 0)
                 {
                     keys = matchesItems.Skip(2).Select(x => "e." + x.Groups[1].Value.Clear().ToCamelCase()).ToArray();
@@ -69,7 +70,7 @@ namespace WorkUtilities.Services
 
             #region Properties
 
-            matchesItems = Regex.Matches(script, Helper.PropertieMap, RegexOptions.IgnoreCase);
+            matchesItems = Regex.Matches(script, StringHelper.PropertieMap, RegexOptions.IgnoreCase);
 
             foreach (Match x in matchesItems.ToList())
             {
