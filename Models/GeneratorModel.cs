@@ -9,5 +9,5 @@ namespace WorkUtilities.Models
 	{
 		public string ProjectName { get; set; } = "?????";
 		public List<EntryModel> EntryModels { get; set; }
-	}
+	}	
 }

@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>WorkUtilities</name>
+    </assembly>
+    <members>
+        <member name="M:WorkUtilities.Controllers.EntityFrameworkController.Post(WorkUtilities.Models.GeneratorModel)">
+            <summary>
+            Converte GeneratorModel em lista de "Entity Builders"
+            </summary>
+            <param name="model"></param>
+            <returns>Lista contendo todos os builders envolvidos separados por traços</returns>
+        </member>
+        <member name="M:WorkUtilities.Controllers.EntryController.Get(System.String)">
+            <summary>
+            Converte SQL em GeneratorModel (Padrão da aplicação)
+            </summary>
+            <param name="script">Script de criação de tabelas/banco exportado do SQL</param>
+            <returns>GeneratorModel</returns>
+        </member>
+        <member name="M:WorkUtilities.Controllers.EntryController.Post(WorkUtilities.Models.GeneratorModel)">
+            <summary>
+            Converte GeneratorModel (Padrão da aplicação) em SQL
+            </summary>
+            <param name="model"></param>
+            <returns>Script SQL para criação de tabelas, vinculos e indices</returns>
+        </member>
+        <member name="T:WorkUtilities.Models.EntryModel">
+            <summary>
+            Representação de Tabela ou Model
+            </summary>
+        </member>
+        <member name="P:WorkUtilities.Models.EntryModel.Name">
+            <summary>
+            Nome da Model
+            </summary>
+        </member>
+        <member name="P:WorkUtilities.Models.EntryModel.NameDB">
+            <summary>
+            Nome da Tabela
+            </summary>
+        </member>
+        <member name="P:WorkUtilities.Models.EntryModel.Properties">
+            <summary>
+            Propriedades contendo suas características
+            </summary>
+        </member>
+        <member name="P:WorkUtilities.Models.EntryModel.Relationships">
+            <summary>
+            Relacionamentos filhos ou paralelos a esta tabela 
+            </summary>
+        </member>
+        <member name="T:WorkUtilities.Models.RelationshipType">
+            <summary>
+            Tipo de relacionamentos
+            </summary>
+        </member>
+        <member name="F:WorkUtilities.Models.RelationshipType.IN_1_OUT_1">
+            <summary>
+            Relacionamento 1 para 1 (O filho contém a PK sendo uma FK para esta tabela)
+            </summary>
+        </member>
+        <member name="F:WorkUtilities.Models.RelationshipType.IN_1_OUT_N">
+            <summary>
+            Relacionamento 1 para N (O filho contém uma FK para esta tabela)
+            </summary>
+        </member>
+        <member name="F:WorkUtilities.Models.RelationshipType.IN_N_OUT_N">
+            <summary>
+            Relacionamento N para N (Será gerada uma tabela intermediária e esta fará a ponte entre as duas tabelas)
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -17,72 +17,78 @@ using FluentValidation.AspNetCore;
 
 namespace WorkUtilities
 {
-    public class Startup
-    {
-        private const string SwaggerTitle = "SQL to EF";
-        private const string SwaggerDescription = "Aplicação Demo";
-        private const string SwaggerVersion = "v1.0";
+	public class Startup
+	{
+		private const string SwaggerTitle = "SQL to EF";
+		private const string SwaggerDescription = "Aplicação Demo";
+		private const string SwaggerVersion = "v1.0";
 
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+		public Startup(IConfiguration configuration)
+		{
+			Configuration = configuration;
+		}
 
-        public IConfiguration Configuration { get; }
+		public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
-        {
-            _ = services.AddControllers();
-            _ = services.AddResponseCompression();
-            _ = services.AddFluentValidation(fvc => fvc.RegisterValidatorsFromAssemblyContaining<Startup>());
-            _ = services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc(SwaggerVersion, new OpenApiInfo
-                {
-                    Title = SwaggerTitle,
-                    Description = SwaggerDescription,
-                    Version = SwaggerVersion,
-                    Contact = new OpenApiContact
-                    {
-                        Name = "Eduardo Rauchbach",
-                        Email = "eduardo.rauchbach@gmail.com",
-                    },
-                });
-                c.UseAllOfForInheritance();
-                c.UseOneOfForPolymorphism();
-            });
+		// This method gets called by the runtime. Use this method to add services to the container.
+		public void ConfigureServices(IServiceCollection services)
+		{
+			_ = services.AddControllers();
+			_ = services.AddResponseCompression();
+			_ = services.AddFluentValidation(fvc => fvc.RegisterValidatorsFromAssemblyContaining<Startup>());
+			_ = services.AddSwaggerGen(c =>
+			{
+				c.SwaggerDoc(SwaggerVersion, new OpenApiInfo
+				{
+					Title = SwaggerTitle,
+					Description = SwaggerDescription,
+					Version = SwaggerVersion,
+					Contact = new OpenApiContact
+					{
+						Name = "Eduardo Rauchbach",
+						Email = "eduardo.rauchbach@gmail.com",
+					},
+				});
+				c.UseAllOfForInheritance();
+				c.UseOneOfForPolymorphism();
 
-            _ = services.AddScoped<SqlToEntityService>();
-            _ = services.AddScoped<SqlToClassService>();
-        }
+				string caminhoAplicacao = AppDomain.CurrentDomain.BaseDirectory;
+				string nomeAplicacao = AppDomain.CurrentDomain.FriendlyName;
+				string caminhoXmlDoc = Path.Combine(caminhoAplicacao, $"{nomeAplicacao}.xml");
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
+				c.IncludeXmlComments(caminhoXmlDoc);
+			});
 
-            string endpoint = $"{SwaggerVersion}/swagger.json";
-            string title = $"{SwaggerTitle} {SwaggerVersion}";
+			_ = services.AddScoped<SqlToEntityService>();
+			_ = services.AddScoped<SqlToClassService>();
+		}
 
-            _ = app.UseDeveloperExceptionPage();
+		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+		{
+			if (env.IsDevelopment())
+			{
+				app.UseDeveloperExceptionPage();
+			}
 
-            _ = app.UseSwagger();
-            _ = app.UseSwaggerUI(c => c.SwaggerEndpoint(endpoint, title));
+			string endpoint = $"{SwaggerVersion}/swagger.json";
+			string title = $"{SwaggerTitle} {SwaggerVersion}";
 
-            app.UseHttpsRedirection();
+			_ = app.UseDeveloperExceptionPage();
 
-            app.UseRouting();
+			_ = app.UseSwagger();
+			_ = app.UseSwaggerUI(c => c.SwaggerEndpoint(endpoint, title));
 
-            app.UseAuthorization();
+			app.UseHttpsRedirection();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
-        }
-    }
+			app.UseRouting();
+
+			app.UseAuthorization();
+
+			app.UseEndpoints(endpoints =>
+			{
+				endpoints.MapControllers();
+			});
+		}
+	}
 }

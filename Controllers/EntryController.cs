@@ -23,6 +23,11 @@ namespace WorkUtilities.Controllers
 			_entryParserService = entryParserService;
 		}
 
+		/// <summary>
+		/// Converte SQL em GeneratorModel (Padrão da aplicação)
+		/// </summary>
+		/// <param name="script">Script de criação de tabelas/banco exportado do SQL</param>
+		/// <returns>GeneratorModel</returns>
 		[HttpGet]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -46,6 +51,11 @@ namespace WorkUtilities.Controllers
 			return response;
 		}
 
+		/// <summary>
+		/// Converte GeneratorModel (Padrão da aplicação) em SQL
+		/// </summary>
+		/// <param name="model"></param>
+		/// <returns>Script SQL para criação de tabelas, vinculos e indices</returns>
 		[HttpPost]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		[ProducesResponseType(StatusCodes.Status500InternalServerError)]

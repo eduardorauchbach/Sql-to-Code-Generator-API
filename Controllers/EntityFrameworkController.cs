@@ -11,7 +11,7 @@ using WorkUtilities.Models;
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace WorkUtilities.Controllers
-{    
+{
     [Route("api/[controller]")]
     [ApiController]
     public class EntityFrameworkController : ControllerBase
@@ -23,6 +23,11 @@ namespace WorkUtilities.Controllers
             _entityGeneratorService = entityGeneratorService;
         }
 
+        /// <summary>
+        /// Converte GeneratorModel em lista de "Entity Builders"
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns>Lista contendo todos os builders envolvidos separados por traços</returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -33,7 +38,7 @@ namespace WorkUtilities.Controllers
 
             try
             {
-                result = string.Join("\n\n\n", _entityGeneratorService.ParseFromGenerator(model));
+                result = string.Join("\n----------------------------------------\n\n", _entityGeneratorService.ParseFromGenerator(model));
 
                 response = Ok(result);
             }

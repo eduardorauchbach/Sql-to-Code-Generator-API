@@ -16,13 +16,14 @@ namespace WorkUtilities.Services.Generator
 
 			foreach (EntryModel e in model.EntryModels)
 			{
-				result.Add(ParseFromEntry(model.ProjectName, e));
+				e.PreProcess();
+				result.Add(ParseFromEntry(model.ProjectName, model, e));
 			}
 
 			return result;
 		}
 
-		public string ParseFromEntry(string projectName, EntryModel entry)
+		public string ParseFromEntry(string projectName, GeneratorModel model, EntryModel entry)
 		{
 			StringBuilder result;
 			int tab;
@@ -31,6 +32,9 @@ namespace WorkUtilities.Services.Generator
 			string[] keys;
 			string[] indexers;
 			string length;
+
+			EntryModel chield;
+			List<MapperProperty> childForeignKey;
 
 			try
 			{
@@ -95,6 +99,43 @@ namespace WorkUtilities.Services.Generator
 
 				#endregion
 
+				#region Relations
+
+				foreach (EntryRelationship r in entry.Relationships)
+				{
+					chield = model.EntryModels.Find(x => x.Name == r.TargetName);
+					childForeignKey = chield.Properties.Where(x => x.ParentName == entry.NameDB).ToList();
+
+					if (chield != null)
+					{
+						switch (r.Type)
+						{
+							case RelationshipType.IN_1_OUT_1:
+								{
+									result.AppendCode(tab, $"_ = entity.HasOne(x => x.{chield.Name}>)", 1);
+									tab++;
+									result.AppendCode(tab, $".WithOne(i => i.{entry.Name})", 1);
+									result.AppendCode(tab, $".HasForeignKey<{chield.Name}>(f => {{ {string.Join(", ", childForeignKey.Select(x => "f." + x.Name))} }});", 2);
+
+									tab--;
+								}
+								break;
+							case RelationshipType.IN_1_OUT_N:
+								{
+									result.AppendCode(tab, $"_ = entity.HasMany(x => x.{chield.Name}>)", 1);
+									tab++;
+									result.AppendCode(tab, $".WithOne(i => i.{entry.Name})", 1);
+									result.AppendCode(tab, $".HasForeignKey<{chield.Name}>(f => {{ {string.Join(", ", childForeignKey.Select(x => "f." + x.Name))} }});", 2);
+
+									tab--;
+								}
+								break;
+						}
+					}
+				}
+
+				#endregion
+
 				#region Parameters
 
 				foreach (MapperProperty p in entry.Properties)
@@ -142,6 +183,7 @@ namespace WorkUtilities.Services.Generator
 
 				#endregion
 
+				tab--;
 				result.AppendCode(tab, "});", 1);
 				tab--;
 				result.AppendCode(tab, "}", 1);
