@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
@@ -16,6 +17,7 @@ namespace WorkUtilities.Models
         /// <summary>
         /// Nome da Model
         /// </summary>
+        [Required]
         public string Name { get; set; }
         /// <summary>
         /// Nome da Tabela
