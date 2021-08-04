@@ -120,7 +120,7 @@ namespace WorkUtilities.Services.Generator
 
 				tab++;
 
-				result.AppendCode(tab, "public ValidatorEntryModel()", 1);
+				result.AppendCode(tab, $"public Validator{entry.Name}()", 1);
 				result.AppendCode(tab, "{", 1);
 
 				tab++;
