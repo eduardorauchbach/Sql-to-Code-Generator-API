@@ -22,7 +22,7 @@ namespace WorkUtilities.Controllers
         }
 
         /// <summary>
-        /// Converte GeneratorModel em lista de "Entity Builders"
+        /// Converte GeneratorModel em lista de "Models" com validação
         /// </summary>
         /// <param name="model"></param>
         /// <returns>Lista contendo todos os builders envolvidos separados por traços</returns>
