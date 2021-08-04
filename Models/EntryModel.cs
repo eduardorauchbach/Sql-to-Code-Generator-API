@@ -1,11 +1,7 @@
 ﻿using FluentValidation;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace WorkUtilities.Models
 {
@@ -70,6 +66,8 @@ namespace WorkUtilities.Models
 			{
                 p.NameDB ??= p.Name;
             }
+
+            //Convert N - N in (1-N N-1)
         }
     }
 
@@ -79,7 +77,7 @@ namespace WorkUtilities.Models
         {
             RuleFor(x => x.Name).NotEmpty().WithMessage("Please specify a name");
             RuleFor(x => x.Properties).Must(x => x.Count > 0).WithMessage("Please fill any Property");
-            //RuleFor(x => x.Postcode).Must(BeAValidPostcode).WithMessage("Please specify a valid postcode");
+            //RuleFor(x => x.Name).Must(x=>x.Length == 2).WithMessage("Please specify a valid postcode");
         }
     }
 }

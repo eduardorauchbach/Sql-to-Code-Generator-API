@@ -202,9 +202,9 @@ namespace WorkUtilities.Services.Parser
                             entryRelationship = new EntryRelationship();
                             entryModelParent.Relationships.Add(entryRelationship);
 
-                            entryRelationship.TargetName = entryModelParent.Name;
+                            entryRelationship.TargetName = entryModel.Name;
 
-                            if (entryProperty.IsKey)
+                            if (entryProperty.IsKey && entryModel.Properties.Count(x=>x.IsKey) == 1)
                             {
                                 entryRelationship.Type = RelationshipType.IN_1_OUT_1;
                             }

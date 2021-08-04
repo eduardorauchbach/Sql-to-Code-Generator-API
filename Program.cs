@@ -8,8 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using WorkUtilities.Services.Generator;
-using WorkUtilities.Services.Parser;
+using WorkUtilities.Services.Generator.Builder;
+using WorkUtilities.Services.Parser.Builder;
 
 namespace WorkUtilities
 {

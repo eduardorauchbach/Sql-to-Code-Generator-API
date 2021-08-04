@@ -4,32 +4,39 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WorkUtilities.Models;
 using WorkUtilities.Services;
+using WorkUtilities.Services.Generator;
 
 namespace WorkUtilities.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SqlToClassController : Controller
+    public class ModelController : Controller
     {
-        private readonly SqlToClassService _sqlToClassService;
+        private readonly ModelGeneratorService _modelGeneratorService;
 
-        public SqlToClassController(SqlToClassService sqlToClassService)
+        public ModelController(ModelGeneratorService modelGeneratorService)
         {
-            _sqlToClassService = sqlToClassService;
+            _modelGeneratorService = modelGeneratorService;
         }
 
+        /// <summary>
+        /// Converte GeneratorModel em lista de "Entity Builders"
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns>Lista contendo todos os builders envolvidos separados por traços</returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public IActionResult Post(string script)
+        public IActionResult Post(GeneratorModel model)
         {
             string result;
             ObjectResult response;
 
             try
             {
-                result = _sqlToClassService.Parse(script);
+                result = string.Join("\n----------------------------------------\n\n", _modelGeneratorService.ParseFromGenerator(model));
 
                 response = Ok(result);
             }

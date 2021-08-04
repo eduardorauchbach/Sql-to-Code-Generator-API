@@ -2,3 +2,20 @@
 
 # CS1591: Missing XML comment for publicly visible type or member
 dotnet_diagnostic.CS1591.severity = none
+
+# Defining the 'public_symbols' symbol group
+dotnet_naming_symbols.module.applicable_kinds           = class
+dotnet_naming_symbols.module.applicable_accessibilities = public
+dotnet_naming_symbols.module.required_modifiers			= abstract
+
+# Defining the `first_word_upper_case_style` naming style
+dotnet_naming_style._Pascal.capitalization = pascal_case
+dotnet_naming_style._Pascal.required_prefix = _
+
+# Defining the `public_members_must_be_capitalized` naming rule, by setting the symbol group to the 'public symbols' symbol group,
+dotnet_naming_rule._Pascal.symbols   = module
+# setting the naming style to the `first_word_upper_case_style` naming style,
+dotnet_naming_rule._Pascal.style    = _Pascal
+
+# and setting the severity.
+dotnet_naming_rule._Pascal.severity = suggestion

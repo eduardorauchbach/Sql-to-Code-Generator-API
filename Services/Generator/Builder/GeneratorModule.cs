@@ -2,10 +2,10 @@
 using Autofac.Integration.Mef;
 using System;
 
-namespace WorkUtilities.Services.Parser
+namespace WorkUtilities.Services.Generator.Builder
 {
-    public class ParserModule : Module
-    {
+	public class GeneratorModule : Module
+	{
         protected override void Load(ContainerBuilder builder)
         {
             if (builder is null)
@@ -17,7 +17,12 @@ namespace WorkUtilities.Services.Parser
             builder.RegisterMetadataRegistrationSources();
 
             _ = builder
-                .RegisterType<EntryParserService>()
+                .RegisterType<EntityGeneratorService>()
+                .InstancePerLifetimeScope()
+                .PropertiesAutowired();
+
+            _ = builder
+                .RegisterType<ModelGeneratorService>()
                 .InstancePerLifetimeScope()
                 .PropertiesAutowired();
         }

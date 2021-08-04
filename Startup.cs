@@ -58,9 +58,6 @@ namespace WorkUtilities
 
 				c.IncludeXmlComments(caminhoXmlDoc);
 			});
-
-			_ = services.AddScoped<SqlToEntityService>();
-			_ = services.AddScoped<SqlToClassService>();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
