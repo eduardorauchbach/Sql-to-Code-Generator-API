@@ -25,6 +25,13 @@
             <param name="model"></param>
             <returns>Script SQL para criação de tabelas, vinculos e indices</returns>
         </member>
+        <member name="M:WorkUtilities.Controllers.ModelController.Post(WorkUtilities.Models.GeneratorModel)">
+            <summary>
+            Converte GeneratorModel em lista de "Models" com validação
+            </summary>
+            <param name="model"></param>
+            <returns>Lista contendo todos os builders envolvidos separados por traços</returns>
+        </member>
         <member name="T:WorkUtilities.Models.EntryModel">
             <summary>
             Representação de Tabela ou Model
