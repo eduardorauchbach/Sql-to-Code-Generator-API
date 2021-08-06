@@ -32,7 +32,7 @@ namespace WorkUtilities.Models
 
     public class EntryRelationship
     {
-        public string TargetName { get; set; }        
+        public string TargetName { get; set; }
         public RelationshipType Type { get; set; }
     }
 
@@ -66,8 +66,6 @@ namespace WorkUtilities.Models
 			{
                 p.NameDB ??= p.Name;
             }
-
-            //Convert N - N in (1-N N-1)
         }
     }
 

@@ -32,14 +32,10 @@ namespace WorkUtilities.Services.Generator
 			StringBuilder result;
 			int tab;
 
-			EntryModel chield;
-
 			try
 			{
 				result = new StringBuilder();
 				tab = 0;
-
-				#region Usings & NameSpace
 
 				result.AppendCode(tab, "using FluentValidation;", 1);
 				result.AppendCode(tab, "using System.Collections.Generic;", 1);
@@ -48,111 +44,20 @@ namespace WorkUtilities.Services.Generator
 
 				result.AppendCode(tab, $"namespace {projectName}.Domain.Model", 1);
 				result.AppendCode(tab, "{", 1);
-
-				#endregion
-
 				tab++;
 
 				result.AppendCode(tab, $"public class {entry.Name}", 1);
 				result.AppendCode(tab, "{", 1);
-
 				tab++;
 
-				#region Parameters
+				BuildProperties(result, tab, entry);
 
-				foreach (MapperProperty p in entry.Properties)
-				{
-					result.AppendCode(tab, $"public {p.Type} {p.Name} {{ get; set; }}", 1);
-				}
-
-				#endregion
-
-				#region Relations
-
-				if (entry.Relationships.Any())
-				{
-					result.AppendLine();
-				}
-
-				foreach (EntryRelationship r in entry.Relationships)
-				{
-					chield = model.EntryModels.Find(x => x.Name == r.TargetName);
-
-					if (chield != null)
-					{
-						if (chield.Properties.All(x => x.IsKey))
-						{
-							foreach (MapperProperty c in chield.Properties.Where(x => x.ParentName != entry.Name))
-							{
-								result.AppendCode(tab, $"public List<{c.ParentName}> {c.ParentName} {{ get; set; }}", 1);
-							}
-
-							result.AppendCode(tab, $"public List<{chield.Name}> {chield.Name}s {{ get; set; }}", 1);
-						}
-						else
-						{
-							switch (r.Type)
-							{
-								case RelationshipType.IN_1_OUT_1:
-									{
-										result.AppendCode(tab, $"public {chield.Name} {chield.Name} {{ get; set; }}", 1);
-									}
-									break;
-								case RelationshipType.IN_1_OUT_N:
-									{
-										result.AppendCode(tab, $"public List<{chield.Name}> {chield.Name}s {{ get; set; }}", 1);
-									}
-									break;
-							}
-						}
-					}
-				}
-
-				#endregion
+				BuildRelations(result, tab, model, entry);
 
 				tab--;
 				result.AppendCode(tab, "}", 2);
 
-				#region Validation
-
-				result.AppendCode(tab, $"public class Validator{entry.Name} : AbstractValidator<{entry.Name}>", 1);
-				result.AppendCode(tab, "{", 1);
-
-				tab++;
-
-				result.AppendCode(tab, $"public Validator{entry.Name}()", 1);
-				result.AppendCode(tab, "{", 1);
-
-				tab++;
-
-				foreach (MapperProperty p in entry.Properties)
-				{
-					if (p.IsRequired)
-					{
-						result.AppendCode(tab, $"RuleFor(x => x.{p.Name}).NotEmpty().WithMessage(\"{MessageRequired}\");", 1);
-					}
-
-					if (p.LengthMain > 0)
-					{
-						if (p.IsFixedLength)
-						{
-							result.AppendCode(tab, $"RuleFor(x => x.{p.Name}).Must(x=>x.Length == {p.LengthMain.Value}).WithMessage(\"{MessageSpecificLength}: {p.LengthMain.Value}\");", 1);
-						}
-						else
-						{
-							int maxLength = p.LengthMain.Value + (p.LengthDecimal.HasValue ? (p.LengthDecimal.Value + 1) : 0);
-							result.AppendCode(tab, $"RuleFor(x => x.{p.Name}).Must(x=>x.Length <= {maxLength}).WithMessage(\"{MessageMaxLength}: {maxLength}\");", 1);
-						}
-					}
-				}
-
-				tab--;
-				result.AppendCode(tab, "}", 1);
-
-				tab--;
-				result.AppendCode(tab, "}", 1);
-
-				#endregion
+				BuildValidator(result, tab, entry);
 
 				tab--;
 				result.AppendCode(tab, "}", 1);
@@ -163,6 +68,98 @@ namespace WorkUtilities.Services.Generator
 			}
 
 			return result.ToString();
+		}
+
+		private static void BuildProperties(StringBuilder result, int tab, EntryModel entry)
+		{
+			foreach (MapperProperty p in entry.Properties)
+			{
+				result.AppendCode(tab, $"public {p.Type} {p.Name} {{ get; set; }}", 1);
+			}
+		}
+
+		private static void BuildRelations(StringBuilder result, int tab, GeneratorModel model, EntryModel entry)
+		{
+			EntryModel chield;
+
+			if (entry.Relationships.Any())
+			{
+				result.AppendLine();
+			}
+
+			foreach (EntryRelationship r in entry.Relationships)
+			{
+				chield = model.EntryModels.Find(x => x.Name == r.TargetName);
+
+				if (chield != null)
+				{
+					if (chield.Properties.All(x => x.IsKey))
+					{
+						foreach (MapperProperty c in chield.Properties.Where(x => x.ParentName != entry.Name))
+						{
+							result.AppendCode(tab, $"public List<{c.ParentName}> {c.ParentName} {{ get; set; }}", 1);
+						}
+
+						result.AppendCode(tab, $"public List<{chield.Name}> {chield.Name}s {{ get; set; }}", 1);
+					}
+					else
+					{
+						switch (r.Type)
+						{
+							case RelationshipType.IN_1_OUT_1:
+								{
+									result.AppendCode(tab, $"public {chield.Name} {chield.Name} {{ get; set; }}", 1);
+								}
+								break;
+							case RelationshipType.IN_1_OUT_N:
+								{
+									result.AppendCode(tab, $"public List<{chield.Name}> {chield.Name}s {{ get; set; }}", 1);
+								}
+								break;
+						}
+					}
+				}
+			}
+		}
+
+		private static void BuildValidator(StringBuilder result, int tab, EntryModel entry)
+		{
+			result.AppendCode(tab, $"public class Validator{entry.Name} : AbstractValidator<{entry.Name}>", 1);
+			result.AppendCode(tab, "{", 1);
+
+			tab++;
+
+			result.AppendCode(tab, $"public Validator{entry.Name}()", 1);
+			result.AppendCode(tab, "{", 1);
+
+			tab++;
+
+			foreach (MapperProperty p in entry.Properties)
+			{
+				if (p.IsRequired)
+				{
+					result.AppendCode(tab, $"RuleFor(x => x.{p.Name}).NotEmpty().WithMessage(\"{MessageRequired}\");", 1);
+				}
+
+				if (p.LengthMain > 0)
+				{
+					if (p.IsFixedLength)
+					{
+						result.AppendCode(tab, $"RuleFor(x => x.{p.Name}).Must(x=>x.Length == {p.LengthMain.Value}).WithMessage(\"{MessageSpecificLength}: {p.LengthMain.Value}\");", 1);
+					}
+					else
+					{
+						int maxLength = p.LengthMain.Value + (p.LengthDecimal.HasValue ? (p.LengthDecimal.Value + 1) : 0);
+						result.AppendCode(tab, $"RuleFor(x => x.{p.Name}).Must(x=>x.Length <= {maxLength}).WithMessage(\"{MessageMaxLength}: {maxLength}\");", 1);
+					}
+				}
+			}
+
+			tab--;
+			result.AppendCode(tab, "}", 1);
+
+			tab--;
+			result.AppendCode(tab, "}", 1);
 		}
 	}
 }

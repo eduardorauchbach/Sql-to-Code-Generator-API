@@ -8,6 +8,11 @@ namespace WorkUtilities.Helpers
 {
 	public static class StringHelper
 	{
+		private static List<string> ReservedWords = new List<string>
+		{
+			"ID"
+		};
+
 		public static string Clear(this string name)
 		{
 			if (string.IsNullOrEmpty(name))
@@ -17,13 +22,7 @@ namespace WorkUtilities.Helpers
 
 			return name.Replace("[", "").Replace("]", "").Replace("(", "").Replace(")", "");
 		}
-
-
-		private static List<string> ReservedWords = new List<string>
-		{
-			"ID"
-		};
-		public static string ToCamelCase(this string name)
+		public static string ToCamelCase(this string name, bool firstLower = false)
 		{
 			string newName;
 
@@ -63,8 +62,14 @@ namespace WorkUtilities.Helpers
 				newName = name;
 			}
 
+			if (firstLower)
+			{
+				newName = newName[..1].ToLower() + newName[1..];
+			}
+
 			return newName;
 		}
+
 
 		public static StringBuilder AppendCode(this StringBuilder builder, int identationLevel, string text, int lines = 0)
 		{

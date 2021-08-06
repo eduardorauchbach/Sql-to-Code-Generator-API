@@ -25,6 +25,11 @@ namespace WorkUtilities.Services.Generator.Builder
                 .RegisterType<ModelGeneratorService>()
                 .InstancePerLifetimeScope()
                 .PropertiesAutowired();
+
+            _ = builder
+                .RegisterType<RepositoryGeneratorService>()
+                .InstancePerLifetimeScope()
+                .PropertiesAutowired();
         }
     }
 }

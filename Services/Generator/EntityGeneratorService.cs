@@ -41,33 +41,25 @@ namespace WorkUtilities.Services.Generator
 				result = new StringBuilder();
 				tab = 0;
 
-				#region Usings & NameSpace
-
 				result.AppendCode(tab, "using Microsoft.EntityFrameworkCore;", 1);
 				result.AppendCode(tab, "using System;", 2);
 
 				result.AppendCode(tab, $"namespace {projectName}.Domain.Model.Builder", 1);
 				result.AppendCode(tab, "{", 1);
-
-				#endregion
-
 				tab++;
 
 				result.AppendCode(tab, $"public static class {entry.Name}ModelBuilder", 1);
 				result.AppendCode(tab, "{", 1);
-
 				tab++;
 
 				result.AppendCode(tab, $"public static ModelBuilder Build(ModelBuilder modelBuilder)", 1);
 				result.AppendCode(tab, "{", 1);
-
 				tab++;
 
 				result.AppendCode(tab, $"return modelBuilder is null", 1);
 				result.AppendCode(tab, $"? throw new ArgumentNullException(nameof(modelBuilder))", 1);
 				result.AppendCode(tab, $": modelBuilder.Entity<{entry.Name}>(entity =>", 1);
 				result.AppendCode(tab, "{", 1);
-
 				tab++;
 
 				#region Name
