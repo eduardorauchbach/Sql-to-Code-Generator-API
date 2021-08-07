@@ -102,7 +102,7 @@ namespace WorkUtilities.Helpers
 
                 default:
                     {
-                        property.Type = "??????????";
+                        property.Type = StringHelper.Unidentified;
                     }
                     break;
             }
@@ -203,7 +203,7 @@ namespace WorkUtilities.Helpers
 
                 default:
                     {
-                        outType = "??????????";
+                        outType = StringHelper.Unidentified;
                     }
                     break;
             }

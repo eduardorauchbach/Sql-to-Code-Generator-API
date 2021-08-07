@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WorkUtilities.Helpers;
 
 namespace WorkUtilities.Models
 {
@@ -13,7 +14,7 @@ namespace WorkUtilities.Models
         /// <summary>
         /// Nome do Projeto a ser atachado o código
         /// </summary>
-		public string ProjectName { get; set; } = "?????";
+		public string ProjectName { get; set; } = StringHelper.Unidentified;
         /// <summary>
         /// Se Logs estarão em uso na aplicação
         /// </summary>

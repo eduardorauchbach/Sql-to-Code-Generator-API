@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentValidation.AspNetCore;
+using Microsoft.Extensions.FileProviders;
 
 namespace WorkUtilities
 {
@@ -23,9 +24,15 @@ namespace WorkUtilities
 		private const string SwaggerDescription = "Aplicação Demo";
 		private const string SwaggerVersion = "v1.0";
 
+		private readonly string _caminhoAplicacao;
+		private readonly string _nomeAplicacao;
+
 		public Startup(IConfiguration configuration)
 		{
 			Configuration = configuration;
+
+			_caminhoAplicacao = AppDomain.CurrentDomain.BaseDirectory;
+			_nomeAplicacao = AppDomain.CurrentDomain.FriendlyName;
 		}
 
 		public IConfiguration Configuration { get; }
@@ -52,9 +59,7 @@ namespace WorkUtilities
 				c.UseAllOfForInheritance();
 				c.UseOneOfForPolymorphism();
 
-				string caminhoAplicacao = AppDomain.CurrentDomain.BaseDirectory;
-				string nomeAplicacao = AppDomain.CurrentDomain.FriendlyName;
-				string caminhoXmlDoc = Path.Combine(caminhoAplicacao, $"{nomeAplicacao}.xml");
+				string caminhoXmlDoc = Path.Combine(_caminhoAplicacao, $"{_nomeAplicacao}.xml");
 
 				c.IncludeXmlComments(caminhoXmlDoc);
 			});
@@ -73,8 +78,22 @@ namespace WorkUtilities
 
 			_ = app.UseDeveloperExceptionPage();
 
+			_ = app.UseStaticFiles();
+			_ = app.UseStaticFiles(
+				new StaticFileOptions
+				{
+					FileProvider = new PhysicalFileProvider(_caminhoAplicacao),
+					RequestPath = "/local"
+				}
+			);
+
 			_ = app.UseSwagger();
-			_ = app.UseSwaggerUI(c => c.SwaggerEndpoint(endpoint, title));
+			_ = app.UseSwaggerUI(c =>
+				{
+					c.SwaggerEndpoint(endpoint, title);
+					c.InjectStylesheet($"/local/{_nomeAplicacao}.css");
+				}
+			);
 
 			app.UseHttpsRedirection();
 

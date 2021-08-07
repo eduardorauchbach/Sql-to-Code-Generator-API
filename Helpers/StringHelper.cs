@@ -8,6 +8,8 @@ namespace WorkUtilities.Helpers
 {
 	public static class StringHelper
 	{
+		public const string Unidentified = "????";
+
 		private static List<string> ReservedWords = new List<string>
 		{
 			"ID"

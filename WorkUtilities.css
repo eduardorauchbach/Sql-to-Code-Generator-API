@@ -1,0 +1,30 @@
+﻿.swagger-ui .responses-inner .curl {
+    max-height: 300px !important;
+}
+
+.request-url {
+    max-height: 300px !important;
+    overflow-x: auto;
+}
+
+.swagger-ui .highlight-code > .microlight {
+    max-height: fit-content !important;
+}
+
+
+.swagger-ui .opblock.opblock-post {
+    border-color: #cc49c2 !important;
+    background: rgba(135, 73, 204,.1) !important;
+}
+
+    .swagger-ui .opblock.opblock-post .opblock-summary {
+        border-color: #cc49c2 !important;
+    }
+
+    .swagger-ui .opblock.opblock-post .opblock-summary-method {
+        background: #cc49c2 !important;
+    }
+
+    .swagger-ui .opblock.opblock-post .tab-header .tab-item.active h4 span:after {
+        background: #cc49c2 !important;
+    }
