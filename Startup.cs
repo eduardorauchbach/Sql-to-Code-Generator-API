@@ -20,7 +20,7 @@ namespace WorkUtilities
 {
 	public class Startup
 	{
-		private const string SwaggerTitle = "SQL to EF";
+		private const string SwaggerTitle = "Code Generator";
 		private const string SwaggerDescription = "Aplicação Demo";
 		private const string SwaggerVersion = "v1.0";
 
@@ -82,8 +82,8 @@ namespace WorkUtilities
 			_ = app.UseStaticFiles(
 				new StaticFileOptions
 				{
-					FileProvider = new PhysicalFileProvider(_caminhoAplicacao),
-					RequestPath = "/local"
+					FileProvider = new PhysicalFileProvider(_caminhoAplicacao + "/Content"),
+					RequestPath = "/local/Content"
 				}
 			);
 
@@ -91,7 +91,7 @@ namespace WorkUtilities
 			_ = app.UseSwaggerUI(c =>
 				{
 					c.SwaggerEndpoint(endpoint, title);
-					c.InjectStylesheet($"/local/{_nomeAplicacao}.css");
+					c.InjectStylesheet($"/local/Content/{_nomeAplicacao}.css");
 				}
 			);
 

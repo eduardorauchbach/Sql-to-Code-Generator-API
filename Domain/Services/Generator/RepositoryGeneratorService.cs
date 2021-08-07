@@ -50,33 +50,29 @@ namespace WorkUtilities.Services.Generator
 					result.AppendCode(tab, "{", 1);
 					tab++;
 					{
-						BuildConstructor(result, tab, entry);
-						result.AppendLine();
+						BuildConstructor(result, tab, entry);						
 
 						result.AppendCode(tab, "#region LoadModel", 2);
 
 						BuildModelLoader(result, tab, entry);
-						result.AppendLine();
 
 						result.AppendCode(tab, "#endregion", 2);
 
 						result.AppendCode(tab, "#region Change Data", 2);
 
 						BuildInserter(result, tab, entry);
-						result.AppendLine();
 
 						BuildUpdater(result, tab, entry);
-						result.AppendLine();
 
 						BuildDeleter(result, tab, model, entry);
-						result.AppendLine();
 
 						result.AppendCode(tab, "#endregion", 2);
 
 						result.AppendCode(tab, "#region Retrieve Data", 2);
 
 						BuildGetterByID(result, tab, entry);
-						result.AppendLine();
+
+						BuildGetter(result, tab, model, entry);
 
 						result.AppendCode(tab, "#endregion", 2);
 					}
@@ -99,17 +95,17 @@ namespace WorkUtilities.Services.Generator
 		private void BuildConstructor(StringBuilder result, int tab, EntryModel entry)
 		{
 			result.AppendCode(tab, "private readonly IConfiguration _config;", 1);
-			result.AppendCode(tab, "private readonly ISqlHelper _dataConnection;", 2);
+			result.AppendCode(tab, "private readonly ISqlHelper _sqlHelper;", 2);
 
 			result.AppendCode(tab, $"public {entry.Name}Repository(IConfiguration configuration, ISqlHelper sqlHelper)", 1);
 			result.AppendCode(tab, "{", 1);
 			tab++;
 
 			result.AppendCode(tab, "_config = configuration;", 1);
-			result.AppendCode(tab, "_dataConnection = sqlHelper;", 1);
+			result.AppendCode(tab, "_sqlHelper = sqlHelper;", 1);
 
 			tab--;
-			result.AppendCode(tab, "}", 1);
+			result.AppendCode(tab, "}", 2);
 		}
 
 		private void BuildModelLoader(StringBuilder result, int tab, EntryModel entry)
@@ -175,7 +171,7 @@ namespace WorkUtilities.Services.Generator
 					result.AppendCode(tab, $"return {varModelName}s;", 1);
 				}
 				tab--;
-				result.AppendCode(tab, "}", 1);
+				result.AppendCode(tab, "}", 2);
 			}
 			catch
 			{
@@ -203,107 +199,6 @@ namespace WorkUtilities.Services.Generator
 				{
 					BuildModelInserter(result, tab, entry);
 				}
-			}
-			catch
-			{
-				throw;
-			}
-		}
-
-		private void BuildModelInserter(StringBuilder result, int tab, EntryModel entry)
-		{
-			string varModelName;
-
-			MapperProperty mainKey;
-			MapperProperty property;
-
-			try
-			{
-				mainKey = entry.Properties.FirstOrDefault(x => x.IsKey) ??
-							new MapperProperty
-							{
-								Name = StringHelper.Unidentified,
-								NameDB = StringHelper.Unidentified,
-								Type = StringHelper.Unidentified
-							};
-				varModelName = entry.Name.ToCamelCase(true);
-
-				result.AppendCode(tab, $"public {entry.Name} Insert({entry.Name} {varModelName})", 1);
-				result.AppendCode(tab, "{", 1);
-				tab++;
-				{
-					result.AppendCode(tab, $"SqlCommand command;", 2);
-
-					result.AppendCode(tab, "try", 1);
-					result.AppendCode(tab, "{", 1);
-					tab++;
-					{
-						#region Insert Command
-
-						result.AppendCode(tab, $"command = new SqlCommand(\" INSERT INTO {entry.NameDB} \" +", 1);
-						tab += 3;
-						{
-							result.AppendCode(tab, "\" (\" +", 1);
-							tab++;
-							{
-								foreach (MapperProperty p in entry.Properties)
-								{
-									property = p;
-
-									result.AppendCode(tab, $"\" {(!entry.Properties.First().Equals(p) ? "," : " ")}");
-
-									result.AppendLine($"{p.NameDB}\" +");
-								}
-							}
-							tab--;
-							result.AppendCode(tab, "\" )\" +", 1);
-							result.AppendCode(tab, $"\" OUTPUT inserted.{mainKey.NameDB} \" +", 1);
-							result.AppendCode(tab, $"\" VALUES \" +", 1);
-							result.AppendCode(tab, "\" (\" +", 1);
-							tab++;
-							{
-								foreach (MapperProperty p in entry.Properties)
-								{
-									property = p;
-
-									result.AppendCode(tab, $"\" {(!entry.Properties.First().Equals(p) ? "," : " ")}");
-
-									result.AppendLine($"@{p.Name}\" +");
-								}
-							}
-							tab--; //end insert
-							result.AppendCode(tab, "\" )\");", 1);
-						}
-						tab -= 3;
-						result.AppendLine();
-
-						#endregion
-
-						foreach (MapperProperty p in entry.Properties.Where(x => x != mainKey))
-						{
-							property = p;
-
-							result.AppendCode(tab, $"command.Parameters.AddWithValue(\"{p.Name}\", {varModelName}.{p.Name}.AsDbValue());", 1);
-						}
-						result.AppendLine();
-
-						result.AppendCode(tab, $"{varModelName}.{mainKey.NameDB} = ({mainKey.Type})_dataConnection.ExecuteScalar(command);", 1);
-					}
-					tab--; //end try
-					result.AppendCode(tab, "}", 1);
-
-					result.AppendCode(tab, "catch", 1);
-					result.AppendCode(tab, "{", 1);
-					tab++;
-
-					result.AppendCode(tab, "throw;", 1);
-
-					tab--; //end catch
-					result.AppendCode(tab, "}", 2);
-					result.AppendCode(tab, $"return {varModelName};", 1);
-				}
-				tab--;
-				result.AppendCode(tab, "}", 1);
 			}
 			catch
 			{
@@ -391,8 +286,8 @@ namespace WorkUtilities.Services.Generator
 							result.AppendCode(tab, "}", 1);
 							result.AppendLine();
 
-							result.AppendCode(tab, $"command.CommandText += $\"{{string.Join(\", \", clauses)}}\";", 1);
-							result.AppendCode(tab, $"_dataConnection.ExecuteScalar(command);", 1);
+							result.AppendCode(tab, $"command.CommandText += string.Join(\", \", clauses);", 1);
+							result.AppendCode(tab, $"_sqlHelper.ExecuteScalar(command);", 1);
 						}
 						tab--; //end if
 						result.AppendCode(tab, "}", 1);
@@ -412,7 +307,108 @@ namespace WorkUtilities.Services.Generator
 				}
 
 				tab--;
-				result.AppendCode(tab, "}", 1);
+				result.AppendCode(tab, "}", 2);
+			}
+			catch
+			{
+				throw;
+			}
+		}
+
+		private void BuildModelInserter(StringBuilder result, int tab, EntryModel entry)
+		{
+			string varModelName;
+
+			MapperProperty mainKey;
+			MapperProperty property;
+
+			try
+			{
+				mainKey = entry.Properties.FirstOrDefault(x => x.IsKey) ??
+							new MapperProperty
+							{
+								Name = StringHelper.Unidentified,
+								NameDB = StringHelper.Unidentified,
+								Type = StringHelper.Unidentified
+							};
+				varModelName = entry.Name.ToCamelCase(true);
+
+				result.AppendCode(tab, $"public {entry.Name} Insert({entry.Name} {varModelName})", 1);
+				result.AppendCode(tab, "{", 1);
+				tab++;
+				{
+					result.AppendCode(tab, $"SqlCommand command;", 2);
+
+					result.AppendCode(tab, "try", 1);
+					result.AppendCode(tab, "{", 1);
+					tab++;
+					{
+						#region Insert Command
+
+						result.AppendCode(tab, $"command = new SqlCommand(\" INSERT INTO {entry.NameDB} \" +", 1);
+						tab += 3;
+						{
+							result.AppendCode(tab, "\" (\" +", 1);
+							tab++;
+							{
+								foreach (MapperProperty p in entry.Properties)
+								{
+									property = p;
+
+									result.AppendCode(tab, $"\" {(!entry.Properties.First().Equals(p) ? "," : " ")}");
+
+									result.AppendLine($"{p.NameDB}\" +");
+								}
+							}
+							tab--;
+							result.AppendCode(tab, "\" )\" +", 1);
+							result.AppendCode(tab, $"\" OUTPUT inserted.{mainKey.NameDB} \" +", 1);
+							result.AppendCode(tab, $"\" VALUES \" +", 1);
+							result.AppendCode(tab, "\" (\" +", 1);
+							tab++;
+							{
+								foreach (MapperProperty p in entry.Properties)
+								{
+									property = p;
+
+									result.AppendCode(tab, $"\" {(!entry.Properties.First().Equals(p) ? "," : " ")}");
+
+									result.AppendLine($"@{p.Name}\" +");
+								}
+							}
+							tab--; //end insert
+							result.AppendCode(tab, "\" )\");", 1);
+						}
+						tab -= 3;
+						result.AppendLine();
+
+						#endregion
+
+						foreach (MapperProperty p in entry.Properties.Where(x => x != mainKey))
+						{
+							property = p;
+
+							result.AppendCode(tab, $"command.Parameters.AddWithValue(\"{p.Name}\", {varModelName}.{p.Name}.AsDbValue());", 1);
+						}
+						result.AppendLine();
+
+						result.AppendCode(tab, $"{varModelName}.{mainKey.NameDB} = ({mainKey.Type})_sqlHelper.ExecuteScalar(command);", 1);
+					}
+					tab--; //end try
+					result.AppendCode(tab, "}", 1);
+
+					result.AppendCode(tab, "catch", 1);
+					result.AppendCode(tab, "{", 1);
+					tab++;
+
+					result.AppendCode(tab, "throw;", 1);
+
+					tab--; //end catch
+					result.AppendCode(tab, "}", 2);
+					result.AppendCode(tab, $"return {varModelName};", 1);
+				}
+				tab--;
+				result.AppendCode(tab, "}", 2);
 			}
 			catch
 			{
@@ -487,7 +483,7 @@ namespace WorkUtilities.Services.Generator
 							}
 
 							result.AppendLine();
-							result.AppendCode(tab, "_dataConnection.ExecuteNonQuery(command);", 1);
+							result.AppendCode(tab, "_sqlHelper.ExecuteNonQuery(command);", 1);
 						}
 						tab--; //end try
 						result.AppendCode(tab, "}", 1);
@@ -500,10 +496,10 @@ namespace WorkUtilities.Services.Generator
 
 						tab--; //end catch
 						result.AppendCode(tab, "}", 2);
-						result.AppendCode(tab, $"return {varModelName}", 1);
+						result.AppendCode(tab, $"return {varModelName};", 1);
 					}
 					tab--;
-					result.AppendCode(tab, "}", 1);
+					result.AppendCode(tab, "}", 2);
 				}
 			}
 			catch
@@ -532,95 +528,6 @@ namespace WorkUtilities.Services.Generator
 				{
 					BuildModelDeleter(result, tab, model, entry);
 				}
-			}
-			catch
-			{
-				throw;
-			}
-		}
-
-		private void BuildModelDeleter(StringBuilder result, int tab, GeneratorModel model, EntryModel entry)
-		{
-			string varModelName;
-			string linkForeignKey;
-			string deleteBlock;
-
-			MapperProperty mainKey;
-			EntryModel currentEntry;
-			List<EntryModel> linkedEntries;
-
-			try
-			{
-				mainKey = entry.Properties.FirstOrDefault(x => x.IsKey) ??
-							new MapperProperty
-							{
-								Name = StringHelper.Unidentified,
-								NameDB = StringHelper.Unidentified,
-								Type = StringHelper.Unidentified
-							};
-				varModelName = entry.Name.ToCamelCase(true);
-
-				result.AppendCode(tab, $"public bool Delete({mainKey.Type} id)", 1);
-				result.AppendCode(tab, "{", 1);
-				tab++;
-				{
-					result.AppendCode(tab, $"SqlCommand command;", 2);
-					result.AppendCode(tab, $"int result;", 2);
-
-					result.AppendCode(tab, "try", 1);
-					result.AppendCode(tab, "{", 1);
-					tab++;
-					{
-						#region Delete Command
-
-						linkedEntries = entry.GetDependents(model);
-
-						result.AppendCode(tab, $"command = new SqlCommand(", 0);
-						tab += 3;
-						{
-							foreach (EntryModel l in linkedEntries)
-							{
-								currentEntry = l;
-								linkForeignKey = l.Properties.Find(x => x.ParentName == entry.Name).Name;
-
-								deleteBlock = $"\" DELETE from {l.Name} where {linkForeignKey} = @{mainKey.Name}";
-								deleteBlock += !linkedEntries.Last().Equals(l) ? ";\" +" : "\");";
-
-								if (linkedEntries.First().Equals(l))
-								{
-									result.AppendLine(deleteBlock);
-								}
-								else
-								{
-									result.AppendCode(tab, deleteBlock, 1);
-								}
-							}
-
-						}
-						tab -= 3;
-						result.AppendLine();
-
-						#endregion
-
-						result.AppendCode(tab, $"command.Parameters.AddWithValue(\"{mainKey.Name}\", id.AsDbValue());", 1);
-
-						result.AppendCode(tab, "result = _dataConnection.ExecuteNonQuery(command);", 1);
-					}
-					tab--; //end try
-					result.AppendCode(tab, "}", 1);
-
-					result.AppendCode(tab, "catch", 1);
-					result.AppendCode(tab, "{", 1);
-					tab++;
-
-					result.AppendCode(tab, "throw;", 1);
-
-					tab--; //end catch
-					result.AppendCode(tab, "}", 2);
-					result.AppendCode(tab, $"return (result > 0);", 1);
-				}
-				tab--;
-				result.AppendCode(tab, "}", 1);
 			}
 			catch
 			{
@@ -696,7 +603,7 @@ namespace WorkUtilities.Services.Generator
 
 							tab--; //end if
 							result.AppendCode(tab, "}", 2);
-							result.AppendCode(tab, $"_dataConnection.ExecuteScalar(command);", 1);
+							result.AppendCode(tab, $"_sqlHelper.ExecuteScalar(command);", 1);
 						}
 						tab--; //end if
 						result.AppendCode(tab, "}", 1);
@@ -716,7 +623,96 @@ namespace WorkUtilities.Services.Generator
 				}
 
 				tab--;
-				result.AppendCode(tab, "}", 1);
+				result.AppendCode(tab, "}", 2);
+			}
+			catch
+			{
+				throw;
+			}
+		}
+
+		private void BuildModelDeleter(StringBuilder result, int tab, GeneratorModel model, EntryModel entry)
+		{
+			string varModelName;
+			string linkForeignKey;
+			string deleteBlock;
+
+			MapperProperty mainKey;
+			EntryModel currentEntry;
+			List<EntryModel> linkedEntries;
+
+			try
+			{
+				mainKey = entry.Properties.FirstOrDefault(x => x.IsKey) ??
+							new MapperProperty
+							{
+								Name = StringHelper.Unidentified,
+								NameDB = StringHelper.Unidentified,
+								Type = StringHelper.Unidentified
+							};
+				varModelName = entry.Name.ToCamelCase(true);
+
+				result.AppendCode(tab, $"public bool Delete({mainKey.Type} id)", 1);
+				result.AppendCode(tab, "{", 1);
+				tab++;
+				{
+					result.AppendCode(tab, $"SqlCommand command;", 2);
+					result.AppendCode(tab, $"int result;", 2);
+
+					result.AppendCode(tab, "try", 1);
+					result.AppendCode(tab, "{", 1);
+					tab++;
+					{
+						#region Delete Command
+
+						linkedEntries = entry.GetDependents(model);
+
+						result.AppendCode(tab, $"command = new SqlCommand(", 0);
+						tab += 3;
+						{
+							foreach (EntryModel l in linkedEntries)
+							{
+								currentEntry = l;
+								linkForeignKey = l.Properties.Find(x => x.ParentName == entry.Name).Name;
+
+								deleteBlock = $"\" DELETE from {l.Name} where {linkForeignKey} = @{mainKey.Name}";
+								deleteBlock += !linkedEntries.Last().Equals(l) ? ";\" +" : "\");";
+
+								if (linkedEntries.First().Equals(l))
+								{
+									result.AppendLine(deleteBlock);
+								}
+								else
+								{
+									result.AppendCode(tab, deleteBlock, 1);
+								}
+							}
+
+						}
+						tab -= 3;
+						result.AppendLine();
+
+						#endregion
+
+						result.AppendCode(tab, $"command.Parameters.AddWithValue(\"{mainKey.Name}\", id.AsDbValue());", 1);
+
+						result.AppendCode(tab, "result = _sqlHelper.ExecuteNonQuery(command);", 1);
+					}
+					tab--; //end try
+					result.AppendCode(tab, "}", 1);
+
+					result.AppendCode(tab, "catch", 1);
+					result.AppendCode(tab, "{", 1);
+					tab++;
+
+					result.AppendCode(tab, "throw;", 1);
+
+					tab--; //end catch
+					result.AppendCode(tab, "}", 2);
+					result.AppendCode(tab, $"return (result > 0);", 1);
+				}
+				tab--;
+				result.AppendCode(tab, "}", 2);
 			}
 			catch
 			{
@@ -762,10 +758,10 @@ namespace WorkUtilities.Services.Generator
 						result.AppendCode(tab, "{", 1);
 						tab++;
 						{
-							result.AppendCode(tab, $"command = new SqlCommand(\" SELECT * FROM {entry.NameDB} WHERE {mainKey.NameDB} = @ID\")", 1);
+							result.AppendCode(tab, $"command = new SqlCommand(\" SELECT * FROM {entry.NameDB} WHERE {mainKey.NameDB} = @ID\");", 1);
 							result.AppendCode(tab, "command.Parameters.AddWithValue(\"ID\", id.AsDbValue());", 2);
 
-							result.AppendCode(tab, "dataSet = _dataConnection.ExecuteDataSet(command);", 2);
+							result.AppendCode(tab, "dataSet = _sqlHelper.ExecuteDataSet(command);", 2);
 
 							result.AppendCode(tab, $"{varModelName} = Load(dataSet).FirstOrDefault();", 2);
 						}
@@ -780,11 +776,134 @@ namespace WorkUtilities.Services.Generator
 
 						tab--; //end catch
 						result.AppendCode(tab, "}", 2);
-						result.AppendCode(tab, $"return {varModelName}", 1);
+						result.AppendCode(tab, $"return {varModelName};", 1);
 					}
 					tab--;
+					result.AppendCode(tab, "}", 2);
+				}
+			}
+			catch
+			{
+				throw;
+			}
+		}
+
+		private void BuildGetter(StringBuilder result, int tab, GeneratorModel model, EntryModel entry)
+		{
+			bool onlyKeys;
+
+			try
+			{
+				onlyKeys = entry.Properties.All(x => x.IsKey);
+
+				if (onlyKeys)
+				{
+					BuildLinkGetter(result, tab, model, entry);
+				}
+				else
+				{
+
+				}
+			}
+			catch
+			{
+				throw;
+			}
+		}
+
+		private void BuildLinkGetter(StringBuilder result, int tab, GeneratorModel model, EntryModel entry)
+		{
+			string varModelName;
+			string varPropName;
+
+			MapperProperty mainKey;
+			MapperProperty property;
+
+			try
+			{
+				mainKey = entry.Properties.FirstOrDefault(x => x.IsKey) ??
+							new MapperProperty
+							{
+								Name = StringHelper.Unidentified,
+								NameDB = StringHelper.Unidentified,
+								Type = StringHelper.Unidentified
+							};
+				varModelName = entry.Name.ToCamelCase(true);
+
+				result.AppendCode(tab, $"public List<{entry.Name}> Get({string.Join(", ", (entry.Properties.Select(x => $"{x.Type}? {x.Name.ToCamelCase(true)} = null")))})", 1);
+				result.AppendCode(tab, "{", 1);
+				tab++;
+				{
+					result.AppendCode(tab, $"SqlCommand command;", 1);
+					result.AppendCode(tab, $"DataSet dataSet;", 2);
+
+					result.AppendCode(tab, $"List<{entry.Name}> {varModelName}s;", 1);
+					result.AppendCode(tab, $"List<string> clauses;", 2);
+
+					result.AppendCode(tab, "try", 1);
+					result.AppendCode(tab, "{", 1);
+					tab++;
+					{
+						result.AppendCode(tab, $"if ({varModelName}s.Count > 0)", 1);
+						result.AppendCode(tab, "{", 1);
+						tab++;
+						{
+							#region Insert Command
+
+							result.AppendCode(tab, $"command = new SqlCommand(\" SELECT * FROM {entry.NameDB} \");", 2);
+
+							result.AppendCode(tab, "clauses = new List<string>();", 2);
+
+							foreach (MapperProperty p in entry.Properties)
+							{
+								property = p;
+								varPropName = p.Name.ToCamelCase(true);
+
+								result.AppendCode(tab, $"if ({varPropName}.HasValue)", 1);
+								result.AppendCode(tab, "{", 1);
+								tab++;
+								{
+									result.AppendCode(tab, $"clauses.Add($\"{p.NameDB} = @{p.Name}\"););", 1);
+									result.AppendCode(tab, $"command.Parameters.AddWithValue($\"{p.Name}\", {varPropName}.AsDbValue());", 1);
+								}
+								tab--; //end if
+								result.AppendCode(tab, "}", 2);
+							}
+							result.AppendLine();
+
+							#endregion
+
+							result.AppendCode(tab, $"if (clauses.Count > 0)", 1);
+							result.AppendCode(tab, "{", 1);
+							tab++;
+
+							result.AppendCode(tab, "command.CommandText += $\" WHERE { string.Join(\" AND \", clauses)}\";", 1);
+
+							tab--; //end if
+							result.AppendCode(tab, "}", 2);
+							result.AppendCode(tab, $"dataSet = _sqlHelper.ExecuteDataSet(command);", 2);
+
+							result.AppendCode(tab, $"{varModelName}s = Load(dataSet);", 2);
+						}
+						tab--; //end if
+						result.AppendCode(tab, "}", 1);
+
+					}
+					tab--; //end try
+					result.AppendCode(tab, "}", 1);
+
+					result.AppendCode(tab, "catch", 1);
+					result.AppendCode(tab, "{", 1);
+					tab++;
+
+					result.AppendCode(tab, "throw;", 1);
+
+					tab--; //end catch
 					result.AppendCode(tab, "}", 1);
 				}
+
+				tab--;
+				result.AppendCode(tab, "}", 2);
 			}
 			catch
 			{
