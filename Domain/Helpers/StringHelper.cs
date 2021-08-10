@@ -24,6 +24,21 @@ namespace WorkUtilities.Helpers
 
 			return name.Replace("[", "").Replace("]", "").Replace("(", "").Replace(")", "");
 		}
+
+		public static string ToLetters(this int index)
+		{
+			const string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+			var value = "";
+
+			if (index >= letters.Length)
+				value += letters[index / letters.Length - 1];
+
+			value += letters[index % letters.Length];
+
+			return value;
+		}
+
 		public static string ToCamelCase(this string name, bool firstLower = false)
 		{
 			string newName;
