@@ -39,6 +39,8 @@ namespace WorkUtilities.Services.Generator
                 result.AppendCode(tab, "using System.Collections.Generic;", 1);
                 result.AppendCode(tab, "using System.Data;", 1);
                 result.AppendCode(tab, "using System.Linq;", 1);
+                result.AppendCode(tab, "using RauchTech.Common.Extensions;", 1);
+                result.AppendCode(tab, "using RauchTech.Common.Model;", 1);
                 result.AppendCode(tab, "using RauchTech.DataExtensions.Sql;", 1);
                 result.AppendCode(tab, $"using {projectName}.Domain.Model;", 2);
 
@@ -322,6 +324,8 @@ namespace WorkUtilities.Services.Generator
             MapperProperty mainKey;
             MapperProperty property;
 
+            List<MapperProperty> propertiesToInsert;
+
             try
             {
                 mainKey = entry.Properties.FirstOrDefault(x => x.IsKey) ??
@@ -345,17 +349,19 @@ namespace WorkUtilities.Services.Generator
                     {
                         #region Insert Command
 
+                        propertiesToInsert = entry.Properties.Where(x => x != mainKey).ToList();
+
                         result.AppendCode(tab, $"command = new SqlCommand(\" INSERT INTO {entry.NameDB} \" +", 1);
                         tab += 3;
                         {
                             result.AppendCode(tab, "\" (\" +", 1);
                             tab++;
                             {
-                                foreach (MapperProperty p in entry.Properties)
+                                foreach (MapperProperty p in propertiesToInsert)
                                 {
                                     property = p;
 
-                                    result.AppendCode(tab, $"\" {(!entry.Properties.First().Equals(p) ? "," : " ")}");
+                                    result.AppendCode(tab, $"\" {(!propertiesToInsert.First().Equals(p) ? "," : " ")}");
 
                                     result.AppendLine($"{p.NameDB}\" +");
                                 }
@@ -367,11 +373,11 @@ namespace WorkUtilities.Services.Generator
                             result.AppendCode(tab, "\" (\" +", 1);
                             tab++;
                             {
-                                foreach (MapperProperty p in entry.Properties)
+                                foreach (MapperProperty p in propertiesToInsert)
                                 {
                                     property = p;
 
-                                    result.AppendCode(tab, $"\" {(!entry.Properties.First().Equals(p) ? "," : " ")}");
+                                    result.AppendCode(tab, $"\" {(!propertiesToInsert.First().Equals(p) ? "," : " ")}");
 
                                     result.AppendLine($"@{p.Name}\" +");
                                 }
@@ -384,7 +390,7 @@ namespace WorkUtilities.Services.Generator
 
                         #endregion
 
-                        foreach (MapperProperty p in entry.Properties.Where(x => x != mainKey))
+                        foreach (MapperProperty p in propertiesToInsert)
                         {
                             property = p;
 
@@ -668,15 +674,14 @@ namespace WorkUtilities.Services.Generator
                         linkedEntries = entry.GetDependents(model);
 
                         result.AppendCode(tab, $"command = new SqlCommand(", 0);
-                        tab += 3;
+                        tab += 4;
                         {
                             foreach (EntryModel l in linkedEntries)
                             {
                                 currentEntry = l;
                                 linkForeignKey = l.Properties.Find(x => x.ParentName == entry.Name).Name;
 
-                                deleteBlock = $"\" DELETE from {l.Name} where {linkForeignKey} = @{mainKey.Name}";
-                                deleteBlock += !linkedEntries.Last().Equals(l) ? ";\" +" : "\");";
+                                deleteBlock = $"\" DELETE from {l.Name} where {linkForeignKey} = @{mainKey.Name} \" +";
 
                                 if (linkedEntries.First().Equals(l))
                                 {
@@ -687,10 +692,9 @@ namespace WorkUtilities.Services.Generator
                                     result.AppendCode(tab, deleteBlock, 1);
                                 }
                             }
-
+                            result.AppendCode(tab, $"\" DELETE from {entry.Name} where {mainKey.NameDB} = @{mainKey.Name} \");", 2);
                         }
-                        tab -= 3;
-                        result.AppendLine();
+                        tab -= 4;
 
                         #endregion
 
@@ -750,7 +754,7 @@ namespace WorkUtilities.Services.Generator
                     tab++;
                     {
                         result.AppendCode(tab, "SqlCommand command;", 1);
-                        result.AppendCode(tab, "Dataset dataset;", 2);
+                        result.AppendCode(tab, "DataSet dataSet;", 2);
 
                         result.AppendCode(tab, $"{entry.Name} {varModelName};", 2);
 
@@ -846,40 +850,31 @@ namespace WorkUtilities.Services.Generator
                     result.AppendCode(tab, "{", 1);
                     tab++;
                     {
-                        result.AppendCode(tab, $"if ({varModelName}s.Count > 0)", 1);
+                        #region Select Command
+
+                        result.AppendCode(tab, $"command = new SqlCommand(\" SELECT * FROM {entry.NameDB} \");", 2);
+
+                        result.AppendCode(tab, "clauses = new List<string>();", 2);
+
+                        foreach (MapperProperty p in entry.Properties)
+                        {
+                            property = p;
+                            BuildClauseAggregator(result, tab, p);
+                        }
+
+                        #endregion
+
+                        result.AppendCode(tab, $"if (clauses.Count > 0)", 1);
                         result.AppendCode(tab, "{", 1);
                         tab++;
-                        {
-                            #region Select Command
 
-                            result.AppendCode(tab, $"command = new SqlCommand(\" SELECT * FROM {entry.NameDB} \");", 2);
+                        result.AppendCode(tab, "command.CommandText += $\" WHERE { string.Join(\" AND \", clauses)}\";", 1);
 
-                            result.AppendCode(tab, "clauses = new List<string>();", 2);
-
-                            foreach (MapperProperty p in entry.Properties)
-                            {
-                                property = p;
-                                BuildClauseAggregator(result, tab, p);
-                            }
-                            result.AppendLine();
-
-                            #endregion
-
-                            result.AppendCode(tab, $"if (clauses.Count > 0)", 1);
-                            result.AppendCode(tab, "{", 1);
-                            tab++;
-
-                            result.AppendCode(tab, "command.CommandText += $\" WHERE { string.Join(\" AND \", clauses)}\";", 1);
-
-                            tab--; //end if
-                            result.AppendCode(tab, "}", 2);
-                            result.AppendCode(tab, $"dataSet = _sqlHelper.ExecuteDataSet(command);", 2);
-
-                            result.AppendCode(tab, $"{varModelName}s = Load(dataSet);", 2);
-                        }
                         tab--; //end if
-                        result.AppendCode(tab, "}", 1);
+                        result.AppendCode(tab, "}", 2);
+                        result.AppendCode(tab, $"dataSet = _sqlHelper.ExecuteDataSet(command);", 2);
 
+                        result.AppendCode(tab, $"{varModelName}s = Load(dataSet);", 2);
                     }
                     tab--; //end try
                     result.AppendCode(tab, "}", 1);
@@ -906,6 +901,8 @@ namespace WorkUtilities.Services.Generator
 
         private void BuildModelGetter(StringBuilder result, int tab, GeneratorModel model, EntryModel entry)
         {
+            StringBuilder commandBase;
+
             string varModelName;
             List<string> functionParameters;
             List<string> joinParameters;
@@ -919,6 +916,8 @@ namespace WorkUtilities.Services.Generator
 
             try
             {
+                commandBase = new StringBuilder();
+
                 mainKey = entry.Properties.FirstOrDefault(x => x.IsKey) ??
                             new MapperProperty
                             {
@@ -951,76 +950,97 @@ namespace WorkUtilities.Services.Generator
 
                 #endregion
 
-                result.AppendCode(tab, $"public List<{entry.Name}> Get({string.Join(", ", functionParameters)})", 1);
+                result.AppendCode(tab, $"public PageModel<{entry.Name}> Get({string.Join(", ", functionParameters)}, PageModel<{entry.Name}> page = null)", 1);
                 result.AppendCode(tab, "{", 1);
                 tab++;
                 {
-                    result.AppendCode(tab, $"SqlCommand command;", 1);
-                    result.AppendCode(tab, $"DataSet dataSet;", 2);
+                    result.AppendCode(tab, "SqlCommand commandCount;", 1);
+                    result.AppendCode(tab, "SqlCommand commandWhere;", 1);
+                    result.AppendCode(tab, "DataSet dataSet;", 2);
 
-                    result.AppendCode(tab, $"List<{entry.Name}> {varModelName}s;", 1);
-                    result.AppendCode(tab, $"List<string> clauses;", 2);
+                    result.AppendCode(tab, "List<string> clauses;", 2);
+                    result.AppendCode(tab, "int count;", 2);
 
                     result.AppendCode(tab, "try", 1);
                     result.AppendCode(tab, "{", 1);
                     tab++;
                     {
-                        result.AppendCode(tab, $"if ({varModelName}s.Count > 0)", 1);
-                        result.AppendCode(tab, "{", 1);
-                        tab++;
+                        #region Select Command
+
+                        result.AppendCode(tab, $"page ??= new PageModel<{entry.Name}>();", 2);
+
+                        tab += 4;
                         {
-                            #region Select Command
-
-                            result.AppendCode(tab, "command = new SqlCommand(\" SELECT DISTINCT A.* \" +", 1);
-                            tab += 3;
-                            {
-                                result.AppendCode(tab, $"\" FROM {entry.NameDB} A ");
-
-                                foreach ((string Prefix, EntryModel Entry) l in linkedEntries)
-                                {
-                                    JoinProperties = l.Entry.Properties.Where(x => x.ParentName == entry.NameDB).ToList();
-                                    joinParameters = JoinProperties.Select(x => $"A.{x.ParentKey} = {l.Prefix}.{x.NameDB}").ToList();
-
-                                    result.AppendCode(0, "LEFT JOIN\" +", 1);
-                                    result.AppendCode(tab, $"\" {l.Entry.NameDB} {l.Prefix} ON {(string.Join(" AND ", joinParameters))}");
-                                }
-                                result.AppendCode(0, "\");", 2);
-                            }
-                            tab -= 3;
-
-                            result.AppendCode(tab, "clauses = new List<string>();", 2);
-
-                            foreach (MapperProperty p in functionProperties)
-                            {
-                                BuildClauseAggregator(result, tab, p, "A");
-                            }
+                            commandBase.AppendCode(tab, $"\" FROM {entry.NameDB} A ");
 
                             foreach ((string Prefix, EntryModel Entry) l in linkedEntries)
                             {
-                                linkedEntriesProperties = l.Entry.Properties.Where(x => x.ParentName != entry.NameDB).ToList();
-                                foreach (MapperProperty p in linkedEntriesProperties)
-                                {
-                                    BuildClauseAggregator(result, tab, p, l.Prefix);
-                                }
+                                JoinProperties = l.Entry.Properties.Where(x => x.ParentName == entry.NameDB).ToList();
+                                joinParameters = JoinProperties.Select(x => $"A.{x.ParentKey} = {l.Prefix}.{x.NameDB}").ToList();
+
+                                commandBase.AppendCode(0, "LEFT JOIN\" +", 1);
+                                commandBase.AppendCode(tab, $"\" {l.Entry.NameDB} {l.Prefix} ON {(string.Join(" AND ", joinParameters))}");
                             }
+                            commandBase.AppendCode(0, "\");", 2);
+                        }
+                        tab -= 4;
 
-                            #endregion
+                        result.AppendCode(tab, "commandCount = new SqlCommand(\" SELECT DISTINCT COUNT(*) \" +", 1);
+                        result.Append(commandBase);
 
-                            result.AppendCode(tab, $"if (clauses.Count > 0)", 1);
-                            result.AppendCode(tab, "{", 1);
-                            tab++;
+                        result.AppendCode(tab, "commandWhere = new SqlCommand(\" SELECT DISTINCT A.* \" +", 1);
+                        result.Append(commandBase);
 
-                            result.AppendCode(tab, "command.CommandText += $\" WHERE { string.Join(\" AND \", clauses)}\";", 1);
+                        result.AppendCode(tab, "clauses = new List<string>();", 2);
 
-                            tab--; //end if
-                            result.AppendCode(tab, "}", 2);
-                            result.AppendCode(tab, $"dataSet = _sqlHelper.ExecuteDataSet(command);", 2);
+                        result.AppendCode(tab, "//Internal Columns", 1);
+                        foreach (MapperProperty p in functionProperties)
+                        {
+                            BuildClausePagingAggregator(result, tab, p, "A");
+                        }
+                        result.AppendLine();
 
-                            result.AppendCode(tab, $"{varModelName}s = Load(dataSet);", 2);
+                        result.AppendCode(tab, "//Outer Columns", 1);
+                        foreach ((string Prefix, EntryModel Entry) l in linkedEntries)
+                        {
+                            linkedEntriesProperties = l.Entry.Properties.Where(x => x.ParentName != entry.NameDB).ToList();
+                            foreach (MapperProperty p in linkedEntriesProperties)
+                            {
+                                BuildClausePagingAggregator(result, tab, p, l.Prefix);
+                            }
+                        }
+                        result.AppendLine();
+
+                        #endregion
+
+                        result.AppendCode(tab, "if (clauses.Count > 0)", 1);
+                        result.AppendCode(tab, "{", 1);
+                        tab++;
+                        {
+                            result.AppendCode(tab, "commandCount.CommandText += $\" WHERE { string.Join(\" AND \", clauses)}\";", 1);
+                            result.AppendCode(tab, "commandWhere.CommandText += $\" WHERE { string.Join(\" AND \", clauses)}\";", 1);
                         }
                         tab--; //end if
-                        result.AppendCode(tab, "}", 1);
+                        result.AppendCode(tab, "}", 2);
 
+                        result.AppendCode(tab, "if (page.OrderBy?.Count == 0)", 1);
+                        result.AppendCode(tab, "{", 1);
+                        tab++;
+                        {
+                            result.AppendCode(tab, $"page.OrderBy.Add((\"{mainKey.NameDB}\", true));", 1);
+                        }
+                        tab--; //end if
+                        result.AppendCode(tab, "}", 2);
+
+                        result.AppendCode(tab, "commandWhere.CommandText += page.ToOrderByScript(\"A\");", 1);
+                        result.AppendCode(tab, "commandWhere.CommandText += page.ToFetchScript();", 2);
+
+                        result.AppendCode(tab, "count = (int)_sqlHelper.ExecuteScalar(commandCount);", 2);
+
+                        result.AppendCode(tab, "dataSet = _sqlHelper.ExecuteDataSet(commandWhere);", 2);
+
+                        result.AppendCode(tab, "page.ItemsCount = count;", 1);
+                        result.AppendCode(tab, "page.Items = Load(dataSet);", 1);
                     }
                     tab--; //end try
                     result.AppendCode(tab, "}", 1);
@@ -1033,7 +1053,7 @@ namespace WorkUtilities.Services.Generator
 
                     tab--; //end catch
                     result.AppendCode(tab, "}", 2);
-                    result.AppendCode(tab, $"return {varModelName}s;", 1);
+                    result.AppendCode(tab, $"return page;", 1);
                 }
 
                 tab--;
@@ -1055,15 +1075,65 @@ namespace WorkUtilities.Services.Generator
 
             prefix = string.IsNullOrEmpty(prefix) ? "" : prefix + ".";
 
-            result.AppendCode(tab, $"if ({varPropName}.HasValue)", 1);
+            if (p.Type == "string")
+            {
+                result.AppendCode(tab, $"if (!string.IsNullOrEmpty({varPropName}))", 1);
+            }
+            else
+            {
+                result.AppendCode(tab, $"if ({varPropName}.HasValue)", 1);
+            }
+
             result.AppendCode(tab, "{", 1);
             tab++;
             {
-                result.AppendCode(tab, $"clauses.Add($\"{prefix}{p.NameDB} = @{p.Name}\"););", 1);
+                if (p.Type == "string")
+                {
+                    result.AppendCode(tab, $"clauses.Add($\"{prefix}{p.NameDB} LIKE '%' + @{p.Name} + '%'\");", 1);
+                }
+                else
+                {
+                    result.AppendCode(tab, $"clauses.Add($\"{prefix}{p.NameDB} = @{p.Name}\");", 1);
+                }
+
                 result.AppendCode(tab, $"command.Parameters.AddWithValue($\"{p.Name}\", {varPropName}.AsDbValue());", 1);
             }
             tab--; //end if
-            result.AppendCode(tab, "}", 2);
+            result.AppendCode(tab, "}", 1);
+        }
+
+        private void BuildClausePagingAggregator(StringBuilder result, int tab, MapperProperty p, string prefix = "")
+        {
+            string varPropName = p.Name.ToCamelCase(true);
+
+            prefix = string.IsNullOrEmpty(prefix) ? "" : prefix + ".";
+
+            if (p.Type == "string")
+            {
+                result.AppendCode(tab, $"if (!string.IsNullOrEmpty({varPropName}))", 1);
+            }
+            else
+            {
+                result.AppendCode(tab, $"if ({varPropName}.HasValue)", 1);
+            }
+
+            result.AppendCode(tab, "{", 1);
+            tab++;
+            {
+                if (p.Type == "string")
+                {
+                    result.AppendCode(tab, $"clauses.Add($\"{prefix}{p.NameDB} LIKE '%' + @{p.Name} + '%'\");", 1);
+                }
+                else
+                {
+                    result.AppendCode(tab, $"clauses.Add($\"{prefix}{p.NameDB} = @{p.Name}\");", 1);
+                }
+
+                result.AppendCode(tab, $"commandCount.Parameters.AddWithValue($\"{p.Name}\", {varPropName}.AsDbValue());", 1);
+                result.AppendCode(tab, $"commandWhere.Parameters.AddWithValue($\"{p.Name}\", {varPropName}.AsDbValue());", 1);
+            }
+            tab--; //end if
+            result.AppendCode(tab, "}", 1);
         }
 
         #endregion

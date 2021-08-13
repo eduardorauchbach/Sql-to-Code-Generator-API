@@ -22,7 +22,7 @@ namespace WorkUtilities.Services.Parser
         private const string IndexZoneMap = @"INDEX ([^()\s]*) ON ([^()\s\.]+\.)?([\[]?####[\]]?)[\s]*\(([\s]*([^()\s]+[\s]*[^()\s]+[\s]*)*)\)";
         private const string IndexMap = @"([^()\s)]+)[ ]*[^()\s]*[\,]?";
 
-        private const string RelationshipZoneMap = @"ALTER TABLE ([^() ]+\.)?([^() ]*)[^()\.\[\]]*([^() ]*)[\s]?FOREIGN KEY\(([^() ]*)\)[\s]*REFERENCES ([^() ]+\.)?([^() ]*)[\s]?\(([^() ]*)\)";
+        private const string RelationshipZoneMap = @"ALTER TABLE ([^() ]+\.)?([^() ]*)[^()\.\[\]]*CONSTRAINT ([^() ]*)[\s]?FOREIGN KEY\(([^() ]*)\)[\s]*REFERENCES ([^() ]+\.)?([^() ]*)[\s]?\(([^() ]*)\)";
 
         public List<EntryModel> ParseFromSql(string script)
         {
