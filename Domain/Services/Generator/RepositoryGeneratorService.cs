@@ -985,7 +985,7 @@ namespace WorkUtilities.Services.Generator
                         }
                         tab -= 4;
 
-                        result.AppendCode(tab, "commandCount = new SqlCommand(\" SELECT DISTINCT COUNT(*) \" +", 1);
+                        result.AppendCode(tab, $"commandCount = new SqlCommand(\" SELECT COUNT(DISTINCT A.{mainKey.NameDB}) \" +", 1);
                         result.Append(commandBase);
 
                         result.AppendCode(tab, "commandWhere = new SqlCommand(\" SELECT DISTINCT A.* \" +", 1);
