@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using WorkUtilities.Helpers;
 using WorkUtilities.Models;
 
-namespace WorkUtilities.Services.Generator
+namespace WorkUtilities.Domain.Services.Generator
 {
 	public class EntityGeneratorService
 	{

@@ -8,7 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using WorkUtilities.Services.Generator.Builder;
+using WorkUtilities.Domain.Services.Generator.Builder;
+using WorkUtilities.Domain.Services.Package.Builder;
 using WorkUtilities.Services.Parser.Builder;
 
 namespace WorkUtilities
@@ -26,6 +27,7 @@ namespace WorkUtilities
                 {
                     _ = builder.RegisterModule<ParserModule>();
                     _ = builder.RegisterModule<GeneratorModule>();
+                    _ = builder.RegisterModule<PackagerModule>();
                 }))
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

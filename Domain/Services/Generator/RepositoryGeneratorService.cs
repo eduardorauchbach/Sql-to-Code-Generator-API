@@ -3,27 +3,42 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WorkUtilities.Domain.Models;
+using WorkUtilities.Domain.Services.Package;
 using WorkUtilities.Helpers;
 using WorkUtilities.Models;
 
-namespace WorkUtilities.Services.Generator
+namespace WorkUtilities.Domain.Services.Generator
 {
     public class RepositoryGeneratorService
     {
-        public List<string> ParseFromGenerator(GeneratorModel model)
+        private readonly FilePackagerService _filePackagerService;
+        private readonly ModuleGeneratorService _moduleGeneratorService;
+
+        public RepositoryGeneratorService(FilePackagerService filePackagerService, ModuleGeneratorService moduleGeneratorService)
         {
-            List<string> result = new List<string>();
+            _filePackagerService = filePackagerService;
+            _moduleGeneratorService = moduleGeneratorService;
+        }
+
+        public List<InMemoryFile> ParseFromGenerator(GeneratorModel model)
+        {
+            List<InMemoryFile> result = new List<InMemoryFile>();
+            string modulebuilder;
 
             foreach (EntryModel e in model.EntryModels)
             {
                 e.PreProcess();
-                result.Add(ParseFromEntry(model.ProjectName, model, e));
+                result.Add(_filePackagerService.BuildFile("", $"{e.Name}Repository", ".cs", ParseFromEntry(model.ProjectName, model, e)));
             }
+
+            modulebuilder = _moduleGeneratorService.BuildModule(model.ProjectName, "Repository", model.EntryModels.Select(x => x.Name).ToList());
+            result.Add(_filePackagerService.BuildFile("Builder", "RepositoryModule", ".cs", modulebuilder));
 
             return result;
         }
 
-        public string ParseFromEntry(string projectName, GeneratorModel model, EntryModel entry)
+        private string ParseFromEntry(string projectName, GeneratorModel model, EntryModel entry)
         {
             StringBuilder result;
             int tab;

@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WorkUtilities.Domain.Models;
+using WorkUtilities.Domain.Services.Package;
 using WorkUtilities.Helpers;
 using WorkUtilities.Models;
 
-namespace WorkUtilities.Services.Generator
+namespace WorkUtilities.Domain.Services.Generator
 {
     public class ModelGeneratorService
     {
@@ -14,14 +16,21 @@ namespace WorkUtilities.Services.Generator
         public const string MessageMaxLength = "Tamanho máximo excedido";
         public const string MessageSpecificLength = "Tamanho específico não respeitado";
 
-        public List<string> ParseFromGenerator(GeneratorModel model)
+        private readonly FilePackagerService _filePackagerService;
+
+        public ModelGeneratorService(FilePackagerService filePackagerService)
         {
-            List<string> result = new List<string>();
+            _filePackagerService = filePackagerService;
+        }
+
+        public List<InMemoryFile> ParseFromGenerator(GeneratorModel model)
+        {
+            List<InMemoryFile> result = new List<InMemoryFile>();
 
             foreach (EntryModel e in model.EntryModels)
             {
                 e.PreProcess();
-                result.Add(ParseFromEntry(model.ProjectName, model, e));
+                result.Add(_filePackagerService.BuildFile("", $"{e.Name}", ".cs", ParseFromEntry(model.ProjectName, model, e)));
             }
 
             return result;

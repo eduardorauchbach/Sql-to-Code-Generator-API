@@ -2,7 +2,7 @@
 using Autofac.Integration.Mef;
 using System;
 
-namespace WorkUtilities.Services.Generator.Builder
+namespace WorkUtilities.Domain.Services.Generator.Builder
 {
 	public class GeneratorModule : Module
 	{
@@ -28,6 +28,11 @@ namespace WorkUtilities.Services.Generator.Builder
 
             _ = builder
                 .RegisterType<RepositoryGeneratorService>()
+                .InstancePerLifetimeScope()
+                .PropertiesAutowired();
+
+            _ = builder
+                .RegisterType<ModuleGeneratorService>()
                 .InstancePerLifetimeScope()
                 .PropertiesAutowired();
         }
