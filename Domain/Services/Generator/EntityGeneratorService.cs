@@ -84,7 +84,7 @@ namespace WorkUtilities.Domain.Services.Generator
 
 				foreach (string indexGroup in indexGroupsSelections)
 				{
-					indexers = entry.Properties.Where(x => x.IsIndex && x.IndexGroup.Contains(indexGroup)).Select(x => x.Name).ToArray();
+					indexers = entry.Properties.Where(x => x.IsIndex && x.IndexGroup.Contains(indexGroup)).Select(x => "e." + x.Name).ToArray();
 
 					result.AppendCode(tab, $"_ = entity.HasIndex(e => new {{ {string.Join(", ", indexers)} }}, \"{indexGroup}\" );", 2);
 				}

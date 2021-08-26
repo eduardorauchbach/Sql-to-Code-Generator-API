@@ -20,7 +20,7 @@ namespace WorkUtilities.Helpers
 
                 case "smallint":
                     {
-                        property.Type = "Int16";
+                        property.Type = "short";
                     }
                     break;
                 case "int":
