@@ -83,7 +83,7 @@ namespace WorkUtilities.Domain.Services.Generator
         {
             foreach (MapperProperty p in entry.Properties)
             {
-                result.AppendCode(tab, $"public {p.Type} {p.Name} {{ get; set; }}", 1);
+                result.AppendCode(tab, $"public {p.Type} {p.Name} {{ get; set; }} // {p.NameDB}", 1);
             }
         }
 

@@ -12,8 +12,8 @@ namespace WorkUtilities.Models
         public List<MapperProperty> Indexers { get; set; }
         public List<MapperProperty> Default { get; set; }
 
-        public List<string> SingleLinks { get; set; }
-        public List<string> MultipleLinks { get; set; }
+        public List<MapperModel> SingleLinks { get; set; }
+        public List<MapperModel> MultipleLinks { get; set; }
         public List<string> Selectors { get; set; }
     }
 }
