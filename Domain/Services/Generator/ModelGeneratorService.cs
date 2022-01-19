@@ -55,7 +55,7 @@ namespace WorkUtilities.Domain.Services.Generator
                 result.AppendCode(tab, "{", 1);
                 tab++;
 
-                result.AppendCode(tab, $"public class {entry.Name}", 1);
+                result.AppendCode(tab, $"public class {entry.Name} // {entry.NameDB}", 1);
                 result.AppendCode(tab, "{", 1);
                 tab++;
 
