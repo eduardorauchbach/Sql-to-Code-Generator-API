@@ -1,0 +1,182 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using WorkUtilities.Domain.Models;
+using WorkUtilities.Domain.Services.Package;
+using WorkUtilities.Helpers;
+using WorkUtilities.Models;
+
+namespace WorkUtilities.Domain.Services.Generator
+{
+    public class DiagramGeneratorService
+    {
+        private const string CheckNo = "&#x2610;";
+        private const string CheckYes = "&check;";
+
+        private StringBuilder diagram = new StringBuilder();
+        private StringBuilder entityList = new StringBuilder();
+
+        public DiagramGeneratorService()
+        {
+        }
+
+        public string ParseFromGenerator(GeneratorModel model)
+        {
+            List<EntryModel> entryModels = new List<EntryModel>();
+
+            diagram.AppendLine("```mermaid");
+            diagram.AppendLine("%%{ init: { 'classDiagram': { 'useMaxWidth': false }}}%%");
+            diagram.AppendLine("classDiagram");
+            //diagram.AppendLine("graph LR");
+
+            foreach (EntryModel e in TopologicalSort(model.EntryModels))
+            {
+                e.PreProcess();
+                ParseFromEntry(diagram, model, e);
+            }
+
+            foreach (EntryModel e in model.EntryModels)
+            {
+                BuildRelations(diagram, 1, model, e);
+            }
+
+            diagram.AppendLine("```");
+            diagram.AppendLine();
+            diagram.AppendLine("<br/><br/><br/>");
+            diagram.Append(entityList);
+
+            return diagram.ToString();
+
+            static List<EntryModel> TopologicalSort(List<EntryModel> objects)
+            {
+                // Create a dictionary to store in-degree of each object
+                Dictionary<string, int> inDegree = new Dictionary<string, int>();
+                foreach (EntryModel obj in objects)
+                {
+                    inDegree[obj.Name] = 0;
+                }
+
+                // Count in-degree of each object
+                foreach (EntryModel obj in objects)
+                {
+                    foreach (var child in obj.Relationships)
+                    {
+                        inDegree[child.TargetName]++;
+                    }
+                }
+
+                // Create a queue to store objects with in-degree 0
+                Queue<EntryModel> queue = new Queue<EntryModel>();
+                foreach (EntryModel obj in objects)
+                {
+                    if (inDegree[obj.Name] == 0)
+                    {
+                        queue.Enqueue(obj);
+                    }
+                }
+
+                // Create a list to store the sorted objects
+                List<EntryModel> sortedObjects = new List<EntryModel>();
+
+                // Perform topological sort
+                while (queue.Count > 0)
+                {
+                    var obj = queue.Dequeue();
+                    sortedObjects.Add(obj);
+
+                    foreach (EntryModel currentObject in objects)
+                    {
+                        if (currentObject.Name != obj.Name)
+                            continue;
+                        foreach (var child in currentObject.Relationships)
+                        {
+                            inDegree[child.TargetName]--;
+                            if (inDegree[child.TargetName] == 0)
+                            {
+                                queue.Enqueue(objects.First(x => x.Name == child.TargetName));
+                            }
+                        }
+                    }
+                }
+
+                sortedObjects.Reverse();
+                return sortedObjects;
+            }
+        }
+
+
+
+        public void ParseFromEntry(StringBuilder builder, GeneratorModel model, EntryModel entry)
+        {
+            int tab;
+
+            try
+            {
+                tab = 1;
+
+                diagram.AppendCode(tab, "class " + entry.NameDB + "{", 1);
+                //diagram.AppendCode(tab, $"{entry.NameDB}[\"{entry.NameDB}<br/>", 1);
+                tab++;
+
+                entityList.AppendCode(0, $"## {entry.NameDB}", 2);
+                entityList.AppendLine($"|**Name**|**Type**|**Key**|**Auto**|**Parent**|**Description**|");
+                entityList.AppendLine($"|-|-|-|-|-|-|");
+
+                BuildProperties(diagram, tab, entry);
+
+                entityList.AppendLine();
+
+                tab--;
+                diagram.AppendCode(tab, "}", 2);
+                //diagram.AppendCode(tab, "\"]", 2);
+            }
+            catch
+            {
+                throw;
+            }
+        }
+
+        private void BuildProperties(StringBuilder result, int tab, EntryModel entry)
+        {
+            foreach (MapperProperty p in entry.Properties)
+            {
+                var parent = !string.IsNullOrEmpty(p.ParentName) ? $"[{p.ParentName}](#{p.ParentName})" : "";
+                var key = p.IsKey ? CheckYes : CheckNo;
+                var auto = p.IsAutoGenerated ? CheckYes : CheckNo;
+
+                result.AppendCode(tab, $"+{p.TypeDB} {p.NameDB}", 1);
+                //result.AppendCode(tab, $"<br/>{p.TypeDB} - {p.NameDB}", 1);
+                entityList.AppendLine($"|{p.NameDB}|{p.TypeDB}|{key}|{auto}|{parent}||");
+            }
+        }
+
+        private static void BuildRelations(StringBuilder result, int tab, GeneratorModel model, EntryModel entry)
+        {
+            foreach (EntryRelationship r in entry.Relationships)
+            {
+                switch (r.Type)
+                {
+                    case RelationshipType.IN_1_OUT_1:
+                        {
+                            result.AppendCode(tab, $"{r.TargetName} -- {entry.NameDB}", 1);                            
+                        }
+                        break;
+                    case RelationshipType.IN_1_OUT_N:
+                        {
+                            result.AppendCode(tab, $"{r.TargetName} <|-- {entry.NameDB}", 1);
+                            //result.AppendCode(tab, $"{entry.NameDB} --> {r.TargetName}", 1);
+                        }
+                        break;
+                    case RelationshipType.IN_N_OUT_N:
+                        {
+                            result.AppendCode(tab, $"{r.TargetName} <|--|> {entry.NameDB}", 1);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+}

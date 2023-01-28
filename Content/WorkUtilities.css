@@ -42,3 +42,22 @@
     .swagger-ui .opblock.opblock-post .tab-header .tab-item.active h4 span:after {
         background: #cc49c2 !important;
     }
+
+.swagger-ui .download-contents {
+    position: absolute;
+    top: 10px !important;
+    bottom: auto !important;
+}
+
+.swagger-ui .copy-to-clipboard {
+    position: absolute;
+    top: 10px !important;
+    bottom: auto !important;
+}
+
+.swagger-ui .curl-command .copy-to-clipboard {
+    top: 30px !important;
+    right: 20px;
+    width: 20px;
+    height: 20px;
+}

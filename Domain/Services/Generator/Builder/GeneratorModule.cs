@@ -17,6 +17,11 @@ namespace WorkUtilities.Domain.Services.Generator.Builder
             builder.RegisterMetadataRegistrationSources();
 
             _ = builder
+                .RegisterType<DiagramGeneratorService>()
+                .InstancePerLifetimeScope()
+                .PropertiesAutowired();
+
+            _ = builder
                 .RegisterType<EntityGeneratorService>()
                 .InstancePerLifetimeScope()
                 .PropertiesAutowired();

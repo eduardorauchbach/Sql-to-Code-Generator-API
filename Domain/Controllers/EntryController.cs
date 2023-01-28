@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WorkUtilities.Services.Parser;
 using WorkUtilities.Models;
+using System.IO;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -28,10 +29,10 @@ namespace WorkUtilities.Controllers
 		/// </summary>
 		/// <param name="script">Script de criação de tabelas/banco exportado do SQL</param>
 		/// <returns>GeneratorModel</returns>
-		[HttpGet]
+		[HttpPost]
 		[ProducesResponseType(StatusCodes.Status404NotFound)]
 		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-		public IActionResult Get(string script)
+		public IActionResult GetGeneratorModel (IFormFile file)
 		{
 			GeneratorModel result;
 			ObjectResult response;
@@ -39,7 +40,7 @@ namespace WorkUtilities.Controllers
 			try
 			{
 				result = new GeneratorModel();
-				result.EntryModels = _entryParserService.ParseFromSql(script);
+				result.EntryModels = _entryParserService.ParseFromSql(ReadFormFileAsync(file));
 
 				response = Ok(result);
 			}
@@ -49,33 +50,46 @@ namespace WorkUtilities.Controllers
 			}
 
 			return response;
-		}
 
-		/// <summary>
-		/// Converte GeneratorModel (Padrão da aplicação) em SQL
-		/// </summary>
-		/// <param name="model"></param>
-		/// <returns>Script SQL para criação de tabelas, vinculos e indices</returns>
-		[HttpPost]
-		[ProducesResponseType(StatusCodes.Status404NotFound)]
-		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-		public IActionResult Post(GeneratorModel model)
-		{
-			string result;
-			ObjectResult response;
+            string ReadFormFileAsync(IFormFile file)
+            {
+                if (file == null || file.Length == 0)
+                {
+					return "";
+                }
 
-			try
-			{
-				result = _entryParserService.ParseToSql(model.EntryModels);
+                using (var reader = new StreamReader(file.OpenReadStream()))
+                {
+                    return reader.ReadToEnd();
+                }
+            }
+        }
 
-				response = Ok(result);
-			}
-			catch (Exception ex)
-			{
-				response = StatusCode(500, ex.Message);
-			}
+		///// <summary>
+		///// Converte GeneratorModel (Padrão da aplicação) em SQL
+		///// </summary>
+		///// <param name="model"></param>
+		///// <returns>Script SQL para criação de tabelas, vinculos e indices</returns>
+		//[HttpPost]
+		//[ProducesResponseType(StatusCodes.Status404NotFound)]
+		//[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+		//public IActionResult Post(GeneratorModel model)
+		//{
+		//	string result;
+		//	ObjectResult response;
 
-			return response;
-		}
+		//	try
+		//	{
+		//		result = _entryParserService.ParseToSql(model.EntryModels);
+
+		//		response = Ok(result);
+		//	}
+		//	catch (Exception ex)
+		//	{
+		//		response = StatusCode(500, ex.Message);
+		//	}
+
+		//	return response;
+		//}
 	}
 }
