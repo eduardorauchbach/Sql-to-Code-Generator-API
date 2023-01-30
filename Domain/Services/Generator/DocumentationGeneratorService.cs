@@ -10,7 +10,7 @@ using WorkUtilities.Models;
 
 namespace WorkUtilities.Domain.Services.Generator
 {
-    public class DiagramGeneratorService
+    public class DocumentationGeneratorService
     {
         private const string CheckNo = "&#x2610;";
         private const string CheckYes = "&check;";
@@ -18,7 +18,7 @@ namespace WorkUtilities.Domain.Services.Generator
         private StringBuilder diagram = new StringBuilder();
         private StringBuilder entityList = new StringBuilder();
 
-        public DiagramGeneratorService()
+        public DocumentationGeneratorService()
         {
         }
 

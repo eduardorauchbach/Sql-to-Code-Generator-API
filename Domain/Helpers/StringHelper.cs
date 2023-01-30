@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace WorkUtilities.Helpers
@@ -22,7 +23,7 @@ namespace WorkUtilities.Helpers
 				return name;
 			}
 
-			return name.Replace("[", "").Replace("]", "").Replace("(", "").Replace(")", "");
+			return Regex.Replace(name, @"[\[\]\(\)\n\t\r ]", "");
 		}
 
 		public static string ToLetters(this int index)

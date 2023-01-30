@@ -14,11 +14,11 @@ namespace WorkUtilities.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DiagramController : Controller
+    public class DocumentationController : Controller
     {
-        private readonly DiagramGeneratorService _diagramGeneratorService;
+        private readonly DocumentationGeneratorService _diagramGeneratorService;
 
-        public DiagramController(DiagramGeneratorService diagramGeneratorService)
+        public DocumentationController(DocumentationGeneratorService diagramGeneratorService)
         {
             _diagramGeneratorService = diagramGeneratorService;
         }
