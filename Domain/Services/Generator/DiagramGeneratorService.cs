@@ -24,22 +24,23 @@ namespace WorkUtilities.Domain.Services.Generator
 
         public string ParseFromGenerator(GeneratorModel model)
         {
-            var multigraph = TopologicalSort(model.EntryModels, 6);
+            var sorted = SortParents(model.EntryModels);
+            var entryColletions = SplitRelationGroups(sorted, 6);
 
-            foreach (var graphInfo in multigraph)
+            foreach (var entries in entryColletions)
             {
                 diagram.AppendLine("```mermaid");
                 //diagram.AppendLine("classDiagram");
                 diagram.AppendLine("graph TB");
                 diagram.AppendLine("%%{ init: { 'theme': 'neutral', 'flowchart': { 'useMaxWidth': false, 'curve': 'basis' }}}%%");
 
-                foreach (EntryModel e in graphInfo)
+                foreach (EntryModel e in entries)
                 {
                     e.PreProcess();
                     ParseFromEntry(diagram, model, e);
                 }
 
-                foreach (EntryModel e in graphInfo)
+                foreach (EntryModel e in entries)
                 {
                     BuildRelations(diagram, 1, model, e);
                 }
@@ -55,150 +56,285 @@ namespace WorkUtilities.Domain.Services.Generator
 
         }
 
-        private List<List<EntryModel>> TopologicalSort(List<EntryModel> entries, int maxLimit)
+        private List<EntryModel> SortParents(List<EntryModel> original)
         {
-            var sortedEntries = new List<EntryModel>();
-            var visited = new HashSet<string>();
-            var groups = new List<List<EntryModel>>();
-            var group = new List<EntryModel>();
+            List<(EntryModel Entry, string Name, string[] Relations)> newList = new();
 
-            // Helper function to perform topological sort
-            void DFS(EntryModel entry)
+            foreach (var o in original)
             {
-                visited.Add(entry.Name);
-                foreach (var child in entries.Where(x => x.Relationships.Any(y => y.TargetName == entry.Name)))
-                {
-                    DFS(child);
-                }
-                sortedEntries.Add(entry);
+                newList.Add((o, o.Name, o.Relationships.Select(x => x.TargetName).ToArray()));
             }
 
-            // Perform topological sort
-            foreach (var entry in entries)
+            var executed = false;
+            do
             {
-                if (!visited.Contains(entry.Name))
-                {
-                    DFS(entry);
-                }
-            }
+                executed = false;
 
-            // Iterate through sorted entries and form groups
-            for (int i = sortedEntries.Count - 1; i >= 0; i--)
-            {
-                var current = sortedEntries[i];
-
-                // Check if current entry has a parent in current group
-                if (group.Any(x => x.Relationships.Any(y => y.TargetName == current.Name)))
+                for (int i = newList.Count - 1; i >= 0; i--)
                 {
-                    group.Add(current);
-                }
-                else
-                {
-                    // Check if current entry has a child in any previous groups
-                    var hasChildInPreviousGroup = groups.Any(g => g.Any(x => x.Relationships.Any(y => y.TargetName == current.Name)));
-
-                    if (hasChildInPreviousGroup)
+                    for (int j = newList.Count - 1; j > i; j--)
                     {
-                        if (!group.Any(x => x.NameDB == current.NameDB))
-                        {
-                            group.Add(current);
-                        }
-                    }
-                    else
-                    {
-                        // Check if group has reached max limit
-                        if (group.Count >= maxLimit)
-                        {
-                            // Add current entry to new group
-                            group = new List<EntryModel> { current };
-                            groups.Add(group);
-                        }
-                        else
-                        {
-                            if (!group.Any(x => x.NameDB == current.NameDB))
-                            {
-                                group.Add(current);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Add final group to list of groups
-            groups.Add(group);
-            MergeListsWithRecurringEntries(groups);
-
-            return SplitClear(groups).Where(x => x.Any()).ToList();
-
-            void MergeListsWithRecurringEntries(List<List<EntryModel>> listOfLists)
-            {
-                bool executed = false;
-                for (int i = 0; i < listOfLists.Count; i++)
-                {
-                    for (int j = i + 1; j < listOfLists.Count; j++)
-                    {
-                        var recurringEntries = listOfLists[i].Intersect(listOfLists[j]).ToList();
-                        if (recurringEntries.Any())
+                        if (newList[i].Relations.Contains(newList[j].Name))
                         {
                             executed = true;
 
-                            listOfLists[i].AddRange(listOfLists[j]);
-                            listOfLists[i] = listOfLists[i].Distinct().ToList();
-                            listOfLists.RemoveAt(j);
-                            j--;
+                            var temp = newList[i];
+                            newList[i] = newList[j];
+                            newList[j] = temp;
                         }
                     }
                 }
-                if (executed)
-                {
-                    listOfLists.ForEach(x =>
-                    {
-                        x = x.DistinctBy(x => x.NameDB).ToList();
-                        x.ForEach(y =>
-                        {
-                            y.Relationships = y.Relationships.DistinctBy(r => r.TargetName).ToList();
-                        });
-                    });
-                    MergeListsWithRecurringEntries(listOfLists);
-                }
+
+            } while (executed);
+
+            return newList.Select(x => x.Entry).ToList();
+        }
+
+        private IEnumerable<IEnumerable<EntryModel>> SplitRelationGroups(IEnumerable<EntryModel> original, int? defaultLimit = null)
+        {
+            List<(EntryModel Entry, int? group, string[] Relations)> newList = new();
+
+            foreach (var o in original)
+            {
+                newList.Add((o, null, o.Relationships.Select(x => x.TargetName).ToArray()));
             }
 
-            List<List<EntryModel>> SplitClear(List<List<EntryModel>> listOfLists)
+            var groupIndex = 0;
+            var executed = false;
+            do
             {
-                var listAgg = new List<List<EntryModel>>();
-                var agg = new List<EntryModel>();
+                executed = false;
 
-                for (int i = listOfLists.Count - 1; i >= 0; i--)
+                for (int i = newList.Count - 1; i >= 0; i--)
                 {
-                    var exiting = listOfLists[i].Where(x => (x.Relationships?.Count == 0) && !listOfLists[i].Any(y => y.Relationships.Any(z => z.TargetName == x.Name)));
-                    if (exiting.Any())
+                    for (int j = newList.Count - 1; j >= 0; j--)
                     {
-                        foreach (var item in exiting)
+                        if (i != j)
                         {
-                            if (agg.Count <= maxLimit)
+                            if (newList[i].Relations.Contains(newList[j].Entry.Name))
                             {
-                                if (!agg.Any(x => x.NameDB == item.NameDB))
+                                if (newList[i].group != newList[j].group || (newList[i].group is null))
                                 {
-                                    agg.Add(item);
+                                    executed = true;
+
+                                    var currentGroup = 0;
+                                    if (newList[i].group is null && newList[j].group is null)
+                                    {
+                                        groupIndex++;
+                                        currentGroup = groupIndex;
+                                    }
+                                    else if (newList[i].group.HasValue && newList[j].group.HasValue)
+                                    {
+                                        currentGroup = newList[i].group < newList[j].group ? newList[i].group.Value : newList[j].group.Value;
+                                    }
+                                    else
+                                    {
+                                        currentGroup = newList[i].group ?? newList[j].group.Value;
+                                    }
+                                    newList[i] = (newList[i].Entry, currentGroup, newList[i].Relations);
+                                    newList[j] = (newList[j].Entry, currentGroup, newList[j].Relations);
                                 }
                             }
-                            else
-                            {
-                                listAgg.Add(agg);
-                                agg = new List<EntryModel>();
-                            }
                         }
-                        listOfLists[i].RemoveAll(x => exiting.Any(y => y.Name == x.Name));
                     }
                 }
-                if (agg.Any())
-                {
-                    listAgg.Add(agg);
-                }
 
-                return listOfLists.Concat(listAgg).ToList();
+            } while (executed);
+
+            var result = newList.GroupBy(x => x.group).Select(x => x.Select(y => y.Entry).ToList()).ToList();
+
+            if (defaultLimit.HasValue)
+            {
+                do
+                {
+                    executed = false;
+
+                    for (int i = result.Count - 1; i >= 0; i--)
+                    {
+                        var iHasRelation = result[i].Any(x => x.Relationships.Any());
+
+                        for (int j = result.Count - 1; j >= 0; j--)
+                        {
+                            var jHasRelation = result[j].Any(x => x.Relationships.Any());
+
+                            if (i != j)
+                            {
+                                if (iHasRelation && jHasRelation)
+                                {
+                                    if ((result[i].Count + result[j].Count) <= defaultLimit)
+                                    {
+                                        executed = true;
+                                        result[i] = result[i].Concat(result[j]).ToList();
+                                        result.RemoveAt(j);
+                                        break;
+                                    }
+                                }
+                            }
+                            else if (!iHasRelation && !jHasRelation)
+                            {
+                                if (result[i].Count > defaultLimit)
+                                {
+                                    executed = true;
+                                    foreach (var chunk in result[i].Chunk(defaultLimit.Value))
+                                    {
+                                        result.Add(chunk.ToList());
+                                    }
+                                    result.RemoveAt(i);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } while (executed);
             }
+
+            return result.Where(x => x.Any()).OrderByDescending(x=>x.Sum(y=>y.Relationships.Count()));
         }
+
+        //private List<List<EntryModel>> TopologicalSort(List<EntryModel> entries, int maxLimit)
+        //{
+        //    var sortedEntries = new List<EntryModel>();
+        //    var visited = new HashSet<string>();
+        //    var groups = new List<List<EntryModel>>();
+        //    var group = new List<EntryModel>();
+
+        //    // Helper function to perform topological sort
+        //    void DFS(EntryModel entry)
+        //    {
+        //        visited.Add(entry.Name);
+        //        foreach (var child in entries.Where(x => x.Relationships.Any(y => y.TargetName == entry.Name)))
+        //        {
+        //            DFS(child);
+        //        }
+        //        sortedEntries.Add(entry);
+        //    }
+
+        //    // Perform topological sort
+        //    foreach (var entry in entries)
+        //    {
+        //        if (!visited.Contains(entry.Name))
+        //        {
+        //            DFS(entry);
+        //        }
+        //    }
+
+        //    // Iterate through sorted entries and form groups
+        //    for (int i = sortedEntries.Count - 1; i >= 0; i--)
+        //    {
+        //        var current = sortedEntries[i];
+
+        //        // Check if current entry has a parent in current group
+        //        if (group.Any(x => x.Relationships.Any(y => y.TargetName == current.Name)))
+        //        {
+        //            group.Add(current);
+        //        }
+        //        else
+        //        {
+        //            // Check if current entry has a child in any previous groups
+        //            var hasChildInPreviousGroup = groups.Any(g => g.Any(x => x.Relationships.Any(y => y.TargetName == current.Name)));
+
+        //            if (hasChildInPreviousGroup)
+        //            {
+        //                if (!group.Any(x => x.NameDB == current.NameDB))
+        //                {
+        //                    group.Add(current);
+        //                }
+        //            }
+        //            else
+        //            {
+        //                // Check if group has reached max limit
+        //                if (group.Count >= maxLimit)
+        //                {
+        //                    // Add current entry to new group
+        //                    group = new List<EntryModel> { current };
+        //                    groups.Add(group);
+        //                }
+        //                else
+        //                {
+        //                    if (!group.Any(x => x.NameDB == current.NameDB))
+        //                    {
+        //                        group.Add(current);
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+
+        //    // Add final group to list of groups
+        //    groups.Add(group);
+        //    MergeListsWithRecurringEntries(groups);
+
+        //    return SplitClear(groups).Where(x => x.Any()).ToList();
+
+        //    void MergeListsWithRecurringEntries(List<List<EntryModel>> listOfLists)
+        //    {
+        //        bool executed = false;
+        //        for (int i = 0; i < listOfLists.Count; i++)
+        //        {
+        //            for (int j = i + 1; j < listOfLists.Count; j++)
+        //            {
+        //                var recurringEntries = listOfLists[i].Intersect(listOfLists[j]).ToList();
+        //                if (recurringEntries.Any())
+        //                {
+        //                    executed = true;
+
+        //                    listOfLists[i].AddRange(listOfLists[j]);
+        //                    listOfLists[i] = listOfLists[i].Distinct().ToList();
+        //                    listOfLists.RemoveAt(j);
+        //                    j--;
+        //                }
+        //            }
+        //        }
+        //        if (executed)
+        //        {
+        //            listOfLists.ForEach(x =>
+        //            {
+        //                x = x.DistinctBy(x => x.NameDB).ToList();
+        //                x.ForEach(y =>
+        //                {
+        //                    y.Relationships = y.Relationships.DistinctBy(r => r.TargetName).ToList();
+        //                });
+        //            });
+        //            MergeListsWithRecurringEntries(listOfLists);
+        //        }
+        //    }
+
+        //    List<List<EntryModel>> SplitClear(List<List<EntryModel>> listOfLists)
+        //    {
+        //        var listAgg = new List<List<EntryModel>>();
+        //        var agg = new List<EntryModel>();
+
+        //        for (int i = listOfLists.Count - 1; i >= 0; i--)
+        //        {
+        //            var exiting = listOfLists[i].Where(x => (x.Relationships?.Count == 0) && !listOfLists[i].Any(y => y.Relationships.Any(z => z.TargetName == x.Name)));
+        //            if (exiting.Any())
+        //            {
+        //                foreach (var item in exiting)
+        //                {
+        //                    if (agg.Count <= maxLimit)
+        //                    {
+        //                        if (!agg.Any(x => x.NameDB == item.NameDB))
+        //                        {
+        //                            agg.Add(item);
+        //                        }
+        //                    }
+        //                    else
+        //                    {
+        //                        listAgg.Add(agg);
+        //                        agg = new List<EntryModel>();
+        //                    }
+        //                }
+        //                listOfLists[i].RemoveAll(x => exiting.Any(y => y.Name == x.Name));
+        //            }
+        //        }
+        //        if (agg.Any())
+        //        {
+        //            listAgg.Add(agg);
+        //        }
+
+        //        return listOfLists.Concat(listAgg).ToList();
+        //    }
+        //}
 
         public void ParseFromEntry(StringBuilder builder, GeneratorModel model, EntryModel entry)
         {
