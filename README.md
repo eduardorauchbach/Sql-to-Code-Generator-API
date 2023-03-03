@@ -55,12 +55,12 @@ Entry --> Documentation
 The repository output uses the DataExtensions project in the below link<br>
 [https://github.com/eduardorauchbach/AzureAPI](https://github.com/eduardorauchbach/AzureAPI)
 
-- **EntityFramework* (POST)
+- **EntityFramework** (POST)
   - **parameters**:
     - **${\color{cyan}GeneratorModel}$** **body** : json with the structure describing the tables structure, indexes and links
   - **returns**: **${\color{cyan}string}$** with the Entity Map
 
-- **Documentation* (POST)
+- **Documentation** (POST)
   - **parameters**:
     - **${\color{cyan}GeneratorModel}$** **body** : json with the structure describing the tables structure, indexes and links
   - **returns**: **${\color{cyan}string}$** with the mermaid structure for the tables and markdown tables with the descriptions and links
