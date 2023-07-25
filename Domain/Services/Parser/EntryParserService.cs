@@ -14,7 +14,7 @@ namespace WorkUtilities.Services.Parser
         #region Sql to EntryModel
 
         private const string MainZoneMap = @"CREATE TABLE ([^() ]*\.)*([^() ]+)[ ]*\((([\s]*([^() ]*)[\s]*([^() ]*)(\([\d\, ]*\))?[ ]?([\S]{4,})?[ ]?(NULL|NOT NULL)[\,\s]*)*)";
-        private const string PropertieMap = @"([\s]*([^() ]*)[\s]*([^() ]*)(\([\d\, ]*\))?[ ]?([\S]{4,})?[ ]?(NULL|NOT NULL)[\,\s]?)";
+        private const string PropertieMap = @"([\s]*([^(), ]*)[\s]*([^(), ]*)(\([\d\, ]*\))?[ ]?([\S]{4,})?[ ]?(NULL|NOT NULL)[\,\s]?)";
 
         private const string KeyZoneMap = @"CONSTRAINT ([^()\s]+) PRIMARY KEY ([^()\s]+)*[\s]*\(([\s]*([^()\s]+[\s]*[^()\s]+[\s]*)*)\)";
         private const string KeyMap = @"([^()\s)]+)[ ]*[^()\s]*[\,]?";
@@ -22,7 +22,7 @@ namespace WorkUtilities.Services.Parser
         private const string IndexZoneMap = @"INDEX ([^()\s]*) ON ([^()\s\.]+\.)?([\[]?####[\]]?)[\s]*\(([\s]*([^()\s]+[\s]*[^()\s]+[\s]*)*)\)";
         private const string IndexMap = @"([^()\s)]+)[ ]*[^()\s]*[\,]?";
 
-        private const string RelationshipZoneMap = @"ALTER TABLE ([^() ]+\.)?([^() ]*)[^()\.\[\]]*CONSTRAINT ([^() ]*)[\s]?FOREIGN KEY\(([^() ]*)\)[\s]*REFERENCES ([^() ]+\.)?([^() ]*)[\s]?\(([^() ]*)\)";
+        private const string RelationshipZoneMap = @"ALTER TABLE ([^() ]+\.)?([^() ]*)[^()\.\[\]]*CONSTRAINT ([^() ]*)[\s]?FOREIGN KEY[ ]*\(([^() ]*)\)[\s]*REFERENCES ([^() ]+\.)?([^() ]*)[\s]?\(([^() ]*)\)";
 
         public List<EntryModel> ParseFromSql(string script)
         {
