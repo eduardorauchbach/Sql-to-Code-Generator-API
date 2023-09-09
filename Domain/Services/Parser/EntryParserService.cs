@@ -67,7 +67,7 @@ namespace WorkUtilities.Services.Parser
             {
                 entryModels = new List<EntryModel>();
 
-                matchMains = Regex.Matches(script, $"{MainZoneMap}({KeyZoneMap})?");
+                matchMains = Regex.Matches(script, $"{MainZoneMap}({KeyZoneMap})?", RegexOptions.IgnoreCase);
                 if (matchMains?.Count > 0)
                 {
                     foreach (Match m in matchMains)
@@ -95,7 +95,7 @@ namespace WorkUtilities.Services.Parser
                             paramType = p.Groups[3].Value.Clear().ToLower();
                             paramLength = p.Groups[4].Value.Clear();
                             paramIdentity = p.Groups[5].Value.Clear();
-                            paramRequired = p.Groups[6].Value.Clear();
+                            paramRequired = p.Groups[6].Value;
 
                             entryProperty = new MapperProperty();
                             entryModel.Properties.Add(entryProperty);
