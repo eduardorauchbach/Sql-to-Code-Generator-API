@@ -13,7 +13,7 @@ namespace WorkUtilities.Services.Parser
     {
         #region Sql to EntryModel
 
-        private const string MainZoneMap = @"CREATE TABLE ([^() ]*\.)*([^() ]+)[ ]*\((####*)[\n\r ]*";
+        private const string MainZoneMap = @"CREATE TABLE ([^() ]*\.)*([^() ]+)[ ]*\((####*)[\n\r\t ]*";
         private const string PropertieMap = @"([\s]*([^(), ]*)[\s]*([^(), ]*)(\([\d\, ]*\))?[ ]?([\S]{4,})?[ ]?(NULL|NOT NULL)([^,]*)?[\,\s]?)";
 
         private const string KeyZoneMap = @"CONSTRAINT ([^()\s]+) PRIMARY KEY ([^()\s]+)*[\s]*\(([\s]*([^()\s]+[\s]*[^()\s]+[\s]*)*)\)";
@@ -127,7 +127,7 @@ namespace WorkUtilities.Services.Parser
 
                         #region Keys
 
-                        keyZone = matchMain.Groups[13]?.Value;
+                        keyZone = matchMain.Groups[14]?.Value;
 
                         if (!string.IsNullOrEmpty(keyZone))
                         {
